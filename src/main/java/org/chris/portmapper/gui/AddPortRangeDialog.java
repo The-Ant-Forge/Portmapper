@@ -83,6 +83,7 @@ public class AddPortRangeDialog extends JDialog {
         this.getRootPane().setDefaultButton(okButton);
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setName(DIALOG_NAME);
+        this.setTitle(Messages.get(DIALOG_NAME + ".title"));
         this.setModal(true);
         this.pack();
 
@@ -96,7 +97,7 @@ public class AddPortRangeDialog extends JDialog {
 
     private static JLabel createLabel(final String postfix) {
         final String completeName = DIALOG_NAME + "." + postfix;
-        final JLabel newLabel = new JLabel(completeName);
+        final JLabel newLabel = new JLabel(Messages.get(completeName + ".text"));
         newLabel.setName(completeName);
         return newLabel;
     }
@@ -156,7 +157,8 @@ public class AddPortRangeDialog extends JDialog {
         protocolComboBox.addItem(Protocol.UDP);
         protocolComboBox.setSelectedIndex(0);
 
-        internalEqualsExternalPorts = new JCheckBox("add_port_range_dialog.external_equal_internal");
+        internalEqualsExternalPorts = new JCheckBox(
+                Messages.get("add_port_range_dialog.external_equal_internal.text"));
         internalEqualsExternalPorts.setName("add_port_range_dialog.external_equal_internal");
         internalEqualsExternalPorts.setSelected(true);
         internalEqualsExternalPorts.addActionListener(e -> {

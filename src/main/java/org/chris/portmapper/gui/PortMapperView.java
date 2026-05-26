@@ -15,23 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/**
- *
- */
 package org.chris.portmapper.gui;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -39,6 +40,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingWorker;
+import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 
 import org.chris.portmapper.Actions;
@@ -48,17 +51,18 @@ import org.chris.portmapper.model.PortMapping;
 import org.chris.portmapper.model.PortMappingPreset;
 import org.chris.portmapper.router.IRouter;
 import org.chris.portmapper.router.RouterException;
-import org.jdesktop.application.FrameView;
-import org.jdesktop.application.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.miginfocom.swing.MigLayout;
 
 /**
- * The main view.
+ * The main view. Owns the application's primary {@link JFrame} and exposes the
+ * JavaBean-style {@code PropertyChangeSupport} surface that {@link Actions#createBound}
+ * subscribes to when binding action enabled-state to view properties. Replaces
+ * the BSAF {@code FrameView} base class.
  */
-public class PortMapperView extends FrameView {
+public class PortMapperView {
 
     private static final String MAIN_FRAME_ROUTER_NOT_CONNECTED = "mainFrame.router.not_connected";
     private static final String ACTION_SHOW_ABOUT_DIALOG = "mainFrame.showAboutDialog";
@@ -91,12 +95,16 @@ public class PortMapperView extends FrameView {
     private JLabel internalIPLabel;
     private JList<PortMappingPreset> portMappingPresets;
     private final PortMapperApp app;
+    private final JFrame frame;
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     @SuppressWarnings("this-escape")
     public PortMapperView(final PortMapperApp app) {
-        super(app);
         this.app = app;
+        this.frame = new JFrame(Messages.get("mainFrame.title"));
+        this.frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         initView();
+        this.frame.pack();
     }
 
     private void initView() {
@@ -109,7 +117,24 @@ public class PortMapperView extends FrameView {
         panel.add(getPresetPanel(), "wrap");
         panel.add(getLogPanel(), "wrap");
 
-        this.setComponent(panel);
+        frame.setContentPane(panel);
+    }
+
+    /** @return the application's main top-level window. */
+    public JFrame getFrame() {
+        return frame;
+    }
+
+    public void addPropertyChangeListener(final PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(listener);
+    }
+
+    public void addPropertyChangeListener(final String propertyName, final PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(propertyName, listener);
+    }
+
+    protected void firePropertyChange(final String propertyName, final boolean oldValue, final boolean newValue) {
+        pcs.firePropertyChange(propertyName, oldValue, newValue);
     }
 
     private JComponent getRouterPanel() {
@@ -253,16 +278,15 @@ public class PortMapperView extends FrameView {
     }
 
     /**
-     * Start the async connect-to-router task. Previously BSAF's {@code @Action}
-     * recognised a {@code Task} return type and auto-submitted it to the
-     * application's task service; we now submit explicitly. The
-     * {@code app.getContext().getTaskService()} reference is BSAF-owned and
-     * will be replaced when {@code SingleFrameApplication} comes out in
-     * step 5.
+     * Start the async connect-to-router task. Previously used BSAF's
+     * {@code Application.getContext().getTaskService().execute(task)}; now
+     * just calls {@link SwingWorker#execute()} directly. {@link ConnectTask}
+     * extends {@code SwingWorker}; its UI-touching work happens in {@code done()}
+     * on the EDT (the BSAF version mistakenly touched Swing labels from
+     * {@code doInBackground} which ran on a worker thread).
      */
     public void connectRouter() {
-        final Task<Void, Void> task = new ConnectTask(app);
-        app.getContext().getTaskService().execute(task);
+        new ConnectTask(app).execute();
     }
 
     public void disconnectRouter() {
@@ -426,12 +450,18 @@ public class PortMapperView extends FrameView {
         clipboard.setContents(new StringSelection(text), (clip, contents) -> logger.trace("Lost clipboard ownership"));
     }
 
-    private class ConnectTask extends Task<Void, Void> {
+    /**
+     * Async router-connect work. {@code doInBackground} runs off the EDT and is
+     * limited to the actual blocking call; the EDT-only Swing updates happen
+     * in {@code done()}. Replaces the previous BSAF {@code Task} subclass which
+     * incorrectly called Swing-touching methods from the worker thread (BSAF's
+     * Task wrappers presumably masked the resulting race conditions).
+     */
+    private class ConnectTask extends SwingWorker<Void, Void> {
 
         private final PortMapperApp app;
 
-        public ConnectTask(final PortMapperApp app) {
-            super(app);
+        ConnectTask(final PortMapperApp app) {
             this.app = app;
         }
 
@@ -439,20 +469,23 @@ public class PortMapperView extends FrameView {
         protected Void doInBackground() throws Exception {
             logger.trace("Connecting to router...");
             app.connectRouter();
-            message("updateAddresses");
-            logger.trace("Updating addresses...");
-            updateAddresses();
-            message("updatePortMappings");
-            logger.trace("Updating port mappings...");
-            updatePortMappings();
-            logger.trace("done");
             return null;
         }
 
         @Override
-        protected void failed(final Throwable cause) {
-            logger.warn("Could not connect to router: {}", cause.getMessage(), cause);
-            logger.warn("Could not connect to router: {}", cause.getMessage());
+        protected void done() {
+            try {
+                get();
+                logger.trace("Updating addresses...");
+                updateAddresses();
+                logger.trace("Updating port mappings...");
+                updatePortMappings();
+                logger.trace("done");
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (final ExecutionException e) {
+                logger.warn("Could not connect to router: {}", e.getCause().getMessage(), e.getCause());
+            }
         }
     }
 }

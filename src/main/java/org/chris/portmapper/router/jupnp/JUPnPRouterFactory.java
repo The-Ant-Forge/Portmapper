@@ -20,7 +20,6 @@ package org.chris.portmapper.router.jupnp;
 import static java.util.stream.Collectors.*;
 
 import java.time.Duration;
-import java.util.EventObject;
 import java.util.List;
 
 import org.chris.portmapper.PortMapperApp;
@@ -34,7 +33,6 @@ import org.jupnp.UpnpServiceImpl;
 import org.jupnp.model.message.header.UDADeviceTypeHeader;
 import org.jupnp.model.message.header.UpnpHeader;
 import org.jupnp.model.meta.RemoteService;
-import org.jdesktop.application.Application.ExitListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,18 +69,10 @@ public class JUPnPRouterFactory extends AbstractRouterFactory {
     }
 
     private void shutdownServiceOnExit(final UpnpService upnpService) {
-        app.addExitListener(new ExitListener() {
-            @Override
-            public void willExit(final EventObject event) {
-                log.debug("Shutdown upnp service");
-                upnpService.shutdown();
-            }
-
-            @Override
-            public boolean canExit(final EventObject event) {
-                return true;
-            }
-        });
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.debug("Shutdown upnp service");
+            upnpService.shutdown();
+        }, "jupnp-shutdown"));
     }
 
     @Override

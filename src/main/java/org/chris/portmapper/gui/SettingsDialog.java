@@ -34,6 +34,7 @@ import javax.swing.KeyStroke;
 import javax.swing.WindowConstants;
 
 import org.chris.portmapper.Actions;
+import org.chris.portmapper.Messages;
 import org.chris.portmapper.PortMapperApp;
 import org.chris.portmapper.Settings;
 import org.chris.portmapper.router.dummy.DummyRouterFactory;
@@ -87,6 +88,7 @@ public class SettingsDialog extends JDialog {
         this.getRootPane().setDefaultButton(okButton);
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setName(DIALOG_NAME);
+        this.setTitle(Messages.get(DIALOG_NAME + ".title"));
         this.setModal(true);
         this.pack();
 
@@ -99,7 +101,7 @@ public class SettingsDialog extends JDialog {
     }
 
     private static JLabel createLabel(final String name) {
-        final JLabel newLabel = new JLabel(name);
+        final JLabel newLabel = new JLabel(Messages.get(name + ".text"));
         newLabel.setName(name);
         return newLabel;
     }
@@ -113,7 +115,8 @@ public class SettingsDialog extends JDialog {
                 "")); // Row Constraints
 
         logger.debug("Use entity encoding is {}", settings.isUseEntityEncoding());
-        useEntityEncoding = new JCheckBox("settings_dialog.use_entity_encoding", settings.isUseEntityEncoding());
+        useEntityEncoding = new JCheckBox(Messages.get("settings_dialog.use_entity_encoding.text"),
+                settings.isUseEntityEncoding());
         useEntityEncoding.setName("settings_dialog.use_entity_encoding");
 
         dialogPane.add(useEntityEncoding, "span 2, wrap");

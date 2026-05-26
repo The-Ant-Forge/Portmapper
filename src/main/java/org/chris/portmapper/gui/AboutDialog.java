@@ -28,6 +28,7 @@ import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
 import org.chris.portmapper.Actions;
+import org.chris.portmapper.Messages;
 import org.chris.portmapper.PortMapperApp;
 import org.chris.portmapper.gui.util.URLLabel;
 
@@ -46,6 +47,7 @@ public class AboutDialog extends JDialog {
         super(app.getMainFrame(), true);
 
         this.setName(DIALOG_NAME);
+        this.setTitle(Messages.get(DIALOG_NAME + ".title"));
 
         final JPanel pane = new JPanel(new MigLayout("", "[center,grow]", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         this.add(pane);
@@ -82,8 +84,8 @@ public class AboutDialog extends JDialog {
         this.dispose();
     }
 
-    private JLabel createLabel(final String name) {
-        final JLabel newLabel = new JLabel(name);
+    private static JLabel createLabel(final String name) {
+        final JLabel newLabel = new JLabel(Messages.get(name + ".text"));
         newLabel.setName(name);
         return newLabel;
     }

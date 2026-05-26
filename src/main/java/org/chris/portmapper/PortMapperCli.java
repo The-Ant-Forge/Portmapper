@@ -28,7 +28,6 @@ import org.chris.portmapper.router.AbstractRouterFactory;
 import org.chris.portmapper.router.IRouter;
 import org.chris.portmapper.router.RouterException;
 import org.chris.portmapper.router.jupnp.JUPnPRouterFactory;
-import org.jdesktop.application.Application;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,7 +100,9 @@ public class PortMapperCli {
         if (System.getProperty("os.name", "").startsWith("Mac")) {
             MacSetup.setupMac();
         }
-        Application.launch(PortMapperApp.class, args);
+        // The args parameter was BSAF-relevant only; we don't propagate it through the new bootstrap.
+        // If any future startup option needs args, route them through here.
+        new PortMapperApp().startup();
     }
 
     private void printPortForwardings(final IRouter router) throws RouterException {

@@ -101,6 +101,7 @@ public class EditPresetDialog extends JDialog {
         this.editedPreset = portMappingPreset;
         this.ports = new LinkedList<>();
         this.setName(DIALOG_NAME);
+        this.setTitle(Messages.get(DIALOG_NAME + ".title"));
         initComponents();
         copyValuesFromPreset();
         this.propertyChangeSupport = new PropertyChangeSupport(ports);
@@ -138,7 +139,7 @@ public class EditPresetDialog extends JDialog {
     }
 
     private static JLabel createLabel(final String name) {
-        final JLabel newLabel = new JLabel(name);
+        final JLabel newLabel = new JLabel(Messages.get(name + ".text"));
         newLabel.setName(name);
         return newLabel;
     }
@@ -162,7 +163,8 @@ public class EditPresetDialog extends JDialog {
         internalClientTextField = new JTextField();
         internalClientTextField.setColumns(10);
 
-        useLocalhostCheckBox = new JCheckBox("preset_dialog.internal_client_use_local_host", true);
+        useLocalhostCheckBox = new JCheckBox(
+                Messages.get("preset_dialog.internal_client_use_local_host.text"), true);
         useLocalhostCheckBox.setName("preset_dialog.internal_client_use_local_host");
         useLocalhostCheckBox.addActionListener(event -> {
             internalClientTextField.setEnabled(!useLocalhostCheckBox.isSelected());

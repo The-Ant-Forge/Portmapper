@@ -28,9 +28,11 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.MissingResourceException;
 
 import javax.swing.JLabel;
 
+import org.chris.portmapper.Messages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,12 +54,20 @@ public class URLLabel extends JLabel {
 
     @SuppressWarnings("this-escape")
     public URLLabel(final String name) {
-        this.text = name;
-        this.setLabelText();
         this.setName(name);
         this.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         this.desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
+
+        // Bundle-driven metadata (previously injected by BSAF's resource auto-population).
+        this.text = Messages.get(name + ".label");
+        this.uri = createUri(Messages.get(name + ".url"));
+        try {
+            this.setToolTipText(Messages.get(name + ".toolTipText"));
+        } catch (final MissingResourceException ignored) {
+            // tooltip is optional
+        }
+        this.setLabelText();
 
         this.addMouseListener(new MouseAdapter() {
             @Override

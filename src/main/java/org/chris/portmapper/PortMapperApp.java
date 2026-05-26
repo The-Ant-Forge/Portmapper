@@ -25,10 +25,13 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EventObject;
 import java.util.List;
 
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import org.chris.portmapper.gui.PortMapperView;
 import org.chris.portmapper.logging.LogMessageListener;
@@ -38,52 +41,92 @@ import org.chris.portmapper.model.PortMappingPreset;
 import org.chris.portmapper.router.AbstractRouterFactory;
 import org.chris.portmapper.router.IRouter;
 import org.chris.portmapper.router.RouterException;
-import org.jdesktop.application.SingleFrameApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The main application class
+ * Application bootstrap and lifecycle. Owns the {@link PortMapperView} (and via it the
+ * main {@link JFrame}), the {@link Settings} model, the {@link SettingsStorage} for
+ * persistence, and the current {@link IRouter} connection.
+ *
+ * <p>Replaces the BSAF {@code SingleFrameApplication} base class. The previous
+ * lifecycle hooks ({@code startup()}, {@code shutdown()}) and {@code ExitListener}
+ * chain are gone; bootstrap is an explicit {@link #startup()} call from
+ * {@link PortMapperCli#startGui}, and cleanup runs as a JVM shutdown hook.
+ * Closing the main frame uses {@link javax.swing.WindowConstants#EXIT_ON_CLOSE}
+ * which triggers shutdown hooks via {@code System.exit(0)}.
  */
-public class PortMapperApp extends SingleFrameApplication {
+public class PortMapperApp {
 
-    /**
-     * The file name for the settings file.
-     */
+    /** The file name for the settings file. */
     private static final String SETTINGS_FILENAME = "settings.xml";
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final Logger logger = LoggerFactory.getLogger(PortMapperApp.class);
 
     private IRouter router;
     private Settings settings;
     private SettingsStorage storage;
+    private PortMapperView view;
     private final LogMessageOutputStream logMessageOutputStream = new LogMessageOutputStream();
     private final LogbackConfiguration logbackConfig = new LogbackConfiguration();
 
-    @Override
-    protected void startup() {
+    /**
+     * Run the application: configure logging, load settings, apply look-and-feel,
+     * schedule GUI construction on the EDT, register a shutdown hook for cleanup.
+     * Returns once the GUI launch has been scheduled; the AWT event thread keeps
+     * the JVM alive thereafter.
+     */
+    public void startup() {
         logbackConfig.registerOutputStream(logMessageOutputStream);
-
         initStorage();
-
         loadSettings();
+        applyLookAndFeel();
+        SwingUtilities.invokeLater(this::launchGui);
+        Runtime.getRuntime().addShutdownHook(new Thread(this::onShutdown, "portmapper-shutdown"));
+    }
 
-        final PortMapperView view = new PortMapperView(this);
-        addExitListener(new ExitListener() {
-            @Override
-            public boolean canExit(final EventObject arg0) {
-                return true;
-            }
+    private void applyLookAndFeel() {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (final Exception e) {
+            // System L&F is best-effort; cross-platform L&F is the JDK fallback if this fails.
+            logger.warn("Could not set system look-and-feel; using cross-platform default: {}", e.getMessage());
+        }
+    }
 
-            @Override
-            public void willExit(final EventObject arg0) {
-                disconnectRouter();
-            }
-        });
-
-        show(view);
-
+    private void launchGui() {
+        view = new PortMapperView(this);
+        view.getFrame().setLocationRelativeTo(null); // center on screen
+        view.getFrame().setVisible(true);
         registerSystemMenuHandlers();
+    }
+
+    /**
+     * JVM shutdown hook: gracefully disconnect any active router and persist the
+     * current settings. Runs on whatever thread the JVM chooses, not the EDT —
+     * touches no Swing components.
+     */
+    private void onShutdown() {
+        logger.debug("Shutdown hook running");
+        disconnectRouter();
+        saveSettings();
+    }
+
+    private void saveSettings() {
+        if (settings == null || storage == null) {
+            return;
+        }
+        logger.debug("Saving settings {} to file {}", settings, SETTINGS_FILENAME);
+        if (logger.isTraceEnabled()) {
+            for (final PortMappingPreset preset : settings.getPresets()) {
+                logger.trace("Saving port mapping {}", preset.getCompleteDescription());
+            }
+        }
+        try {
+            storage.save(SETTINGS_FILENAME, settings);
+        } catch (final IOException e) {
+            logger.warn("Could not save settings to file " + SETTINGS_FILENAME, e);
+        }
     }
 
     /**
@@ -97,12 +140,12 @@ public class PortMapperApp extends SingleFrameApplication {
             return;
         }
         final Desktop desktop = Desktop.getDesktop();
-        final PortMapperView view = getView();
+        final PortMapperView v = getView();
         if (desktop.isSupported(Desktop.Action.APP_PREFERENCES)) {
-            desktop.setPreferencesHandler(e -> view.changeSettings());
+            desktop.setPreferencesHandler(e -> v.changeSettings());
         }
         if (desktop.isSupported(Desktop.Action.APP_ABOUT)) {
-            desktop.setAboutHandler(e -> view.showAboutDialog());
+            desktop.setAboutHandler(e -> v.showAboutDialog());
         }
     }
 
@@ -147,26 +190,37 @@ public class PortMapperApp extends SingleFrameApplication {
         this.logMessageOutputStream.registerListener(listener);
     }
 
-    @Override
-    protected void shutdown() {
-        super.shutdown();
-        logger.debug("Saving settings {} to file {}", settings, SETTINGS_FILENAME);
-        if (logger.isTraceEnabled()) {
-            for (final PortMappingPreset preset : settings.getPresets()) {
-                logger.trace("Saving port mapping {}", preset.getCompleteDescription());
-            }
-        }
-        try {
-            storage.save(SETTINGS_FILENAME, settings);
-        } catch (final IOException e) {
-            logger.warn("Could not save settings to file " + SETTINGS_FILENAME, e);
-        }
+    /**
+     * Show a modal {@link JDialog}. Replaces BSAF's
+     * {@code Application.show(JDialog)} which did similar but went through the
+     * BSAF context.
+     *
+     * @param dialog the dialog to show; should already have its parent set
+     *               (typically via {@link #getMainFrame()}).
+     */
+    public void show(final JDialog dialog) {
+        dialog.setVisible(true);
+    }
+
+    /** @return the application's main top-level window, or {@code null} if startup hasn't completed yet. */
+    public JFrame getMainFrame() {
+        return view == null ? null : view.getFrame();
     }
 
     public PortMapperView getView() {
-        return (PortMapperView) getMainView();
+        return view;
     }
 
+    /**
+     * Find and connect to a router. On the EDT-respecting code path (a button click)
+     * the worker thread is provided by {@link PortMapperView}'s {@code ConnectTask};
+     * the {@link JOptionPane#showInputDialog} call at the bottom (only used when
+     * multiple routers are discovered) technically wants the EDT - latent issue
+     * inherited from the pre-modernisation code, not addressed in this step.
+     *
+     * @throws RouterException if the router-factory can't be instantiated or the
+     *         discovery step fails.
+     */
     public void connectRouter() throws RouterException {
         if (this.router != null) {
             logger.warn("Already connected to router. Cannot create a second connection.");
@@ -260,7 +314,10 @@ public class PortMapperApp extends SingleFrameApplication {
 
         this.router.disconnect();
         this.router = null;
-        this.getView().fireConnectionStateChange();
+        // View may already be torn down if we're in the shutdown hook; guard.
+        if (this.view != null) {
+            this.view.fireConnectionStateChange();
+        }
     }
 
     public IRouter getRouter() {
