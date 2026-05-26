@@ -38,8 +38,8 @@ Full plan: [bsaf-plan.md](bsaf-plan.md). Seven steps total.
 
 - **Evaluate <https://github.com/offbynull/portmapper>** as another UPnP backend candidate. User-requested.
 - **args4j replacement.** `args4j:2.37` is end-of-life (last release 2018). Modern alternatives: **picocli** (preferred for subcommand support, colored help, completion scripts) or jcommander. Self-contained change; would touch `CommandLineArguments.java` only. Tests in `TestCommandLineArguments` provide a safety net for the swap.
+- **Modern Java idioms.** Records for `PortMapping`/`Protocol`/`SinglePortMapping`/`PortMappingPreset`, pattern matching where useful, judicious `var`, sealed interface for `IRouter` if it adds clarity. Sequence this **before** the code review so the review evaluates the modern shape rather than flagging legacy idioms that are about to disappear.
 - **Code review pass.** Use [code-review.md](code-review.md) as the checklist. Produces a dated `Code-Review-YYMMDD.md` deliverable.
-- **Modern Java idioms.** Records for `PortMapping`/`Protocol`/`SinglePortMapping`/`PortMappingPreset`, pattern matching where useful, judicious `var`, sealed interface for `IRouter` if it adds clarity.
 - **Re-enable GitHub Actions** when the codebase stabilizes (currently disabled at repo level; re-enable via Settings → Actions → "Allow all actions" or `gh api -X PUT repos/The-Ant-Forge/Portmapper/actions/permissions -F enabled=true`).
 - **`Settings` migration shim removal.** The one-line shim in `Settings.getRouterFactoryClassName()` that rewrites the pre-rename Cling FQCN can be deleted once the maintainer's `settings.xml` has been rewritten (one launch cycle).
 
