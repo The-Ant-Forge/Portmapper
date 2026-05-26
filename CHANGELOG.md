@@ -4,7 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased] - The Ant Forge fork
+
+Private modernization fork of [kaklakariada/portmapper](https://github.com/kaklakariada/portmapper). Not submitted upstream; not published to Maven Central.
+
+### Changed
+
+- Forked from upstream v2.2.4 at commit `fcf6b73`.
+- Java baseline raised to Java 21 LTS (was Java 11).
+- Removed Maven Central / Sonatype publishing, GPG signing, SonarCloud, and the upstream release workflow.
+- Build group changed to `org.theantforge.portmapper`.
+
+---
+
+_Upstream history below preserved verbatim for reference._
 
 ## [2.2.4] - 2024-09-14
 
