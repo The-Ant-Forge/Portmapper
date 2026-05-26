@@ -36,15 +36,4 @@ public record SinglePortMapping(Protocol protocol, int internalPort, int externa
     public static SinglePortMapping defaults() {
         return new SinglePortMapping(Protocol.TCP, 1, 1);
     }
-
-    /**
-     * Defensive {@code copy()} that historically returned a new mutable instance.
-     * Records are immutable so this is a no-op return-self; kept as a stable API
-     * affordance so call sites that asked for a copy don't need to change.
-     *
-     * @return this record (records are immutable, no copy needed).
-     */
-    public SinglePortMapping copy() {
-        return this;
-    }
 }

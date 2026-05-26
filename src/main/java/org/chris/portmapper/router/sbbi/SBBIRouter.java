@@ -217,9 +217,4 @@ public class SBBIRouter extends AbstractRouter {
     public void disconnect() {
         // Nothing to do right now.
     }
-
-    public long getUpTime() {
-        // The SBBI library does not provide a method for getting the uptime.
-        return 0;
-    }
 }

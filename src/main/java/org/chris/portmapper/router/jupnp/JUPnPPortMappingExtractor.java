@@ -27,10 +27,10 @@ import org.jupnp.model.message.control.IncomingActionResponseMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.sbbi.upnp.impls.InternetGatewayDevice;
-
 /**
- * This class fetches all {@link PortMapping} from an {@link InternetGatewayDevice}.
+ * Enumerates {@link PortMapping} entries from a router by invoking the jUPnP
+ * {@link ActionService} bound to its WAN connection service. Stops cleanly on
+ * the UPnP terminal error codes (713 / 402 / 714 / 899).
  */
 class JUPnPPortMappingExtractor {
 
