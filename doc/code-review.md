@@ -9,9 +9,14 @@ any non-trivial change. Items are ordered roughly from "always check" to
    already catches unused imports, but stale resource keys and orphan
    action names slip past it.
 
-2. **Dead dependencies** — anything in `build.gradle` not referenced by
-   the code, CVE exposure on transitive deps. `commons-jxpath:1.1` is
-   pinned only for the SBBI backend; flag if SBBI usage shifts.
+2. **Dead and under-utilized dependencies** — anything in `build.gradle`
+   not referenced by the code (drop entirely) and anything referenced
+   by only a handful of call sites where inlining or vendoring a small
+   helper would shrink the dep footprint. Also CVE exposure on
+   transitive deps. Currently flagged for utilization review: `args4j`
+   is touched only by `CommandLineArguments` (candidate for inlining
+   or swapping to picocli); `commons-jxpath:1.1` is pinned only for
+   the SBBI backend and would be droppable if SBBI is dropped.
 
 3. **Duplication** — repeated UPnP error decoding, duplicated dialog
    wiring across `AboutDialog` / `SettingsDialog` / `EditPresetDialog`,
@@ -104,13 +109,16 @@ any non-trivial change. Items are ordered roughly from "always check" to
     `settings.xml` files (or carry a migration shim). Renaming or
     relocating a factory class is a settings-compat hazard.
 
-17. **BSAF surface coverage** — flag new code that deepens coupling
-    to `org.jdesktop.application.*` (the wave-2 migration target).
-    Prefer plain `AbstractAction` / lambda `ActionListener` over new
-    `@Action` annotations, `ResourceBundle.getBundle` over new
-    `ResourceMap` lookups, `java.awt.Desktop` over `OSXAdapter`.
-    Existing BSAF use is fine; new BSAF use makes the migration
-    harder.
+17. **Transitional library coupling** — when actively replacing a
+    library, flag new code that deepens coupling to the library
+    being phased out (it makes the migration harder). **Currently
+    in flight**: BSAF removal — prefer `Messages.get` over new
+    `ResourceMap` lookups, plain `AbstractAction` / lambda
+    `ActionListener` over new `@Action` annotations,
+    `java.awt.Desktop` over `OSXAdapter`. Existing BSAF use is
+    grandfathered; new BSAF coupling is the concern. **Delete this
+    item once BSAF is fully removed** (or repurpose it for the next
+    in-flight migration).
 
 18. **GPL-3 attribution & license-header compliance** — every source
     file must carry the `Copyright (C) 2015 Christoph Pirkl` header
