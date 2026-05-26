@@ -36,11 +36,10 @@ Full plan: [bsaf-plan.md](bsaf-plan.md). Seven steps total.
 
 ## Backlog
 
-- **Modern Java idioms — partial complete** (commit `38e5cdc`): `PortMapping` is now a record; both table models use arrow-syntax switch expressions. **Deferred — needs a deliberate user call**:
-  - `SinglePortMapping` → record and `PortMappingPreset` → record. Both are persisted to `settings.xml` via XMLEncoder. JavaBeans XML format (existing `<void property="X">...</void>` blocks) is NOT interchangeable with record XML format (positional canonical-constructor args). Converting silently destroys any saved presets on first launch. User's current `settings.xml` is small (151 bytes, likely no presets) so a reset would be a non-event in practice — but worth explicit acceptance before doing it.
-  - `var` sweep. Cosmetic. Tightens local-variable declarations where the type is obvious from the right-hand side. ~30 min, can land any time.
-  - Pattern matching on `instanceof` and switch labels. Modest opportunities in this codebase since downcasts are rare. The clearest candidate is `Protocol` switch-handling in `WeUPnPRouter.removePortMapping` and `SBBIRouter.removePortMapping` (currently if/else); could become switch expressions.
-  - Sealed interface for `IRouter`? Probably not — the factory-by-FQCN-reflection pattern in `Settings` means subclasses aren't strictly enumerable. Skip unless we drop dynamic factory loading.
+- **Modern Java idioms — done** (commits `38e5cdc`, `e9f7238`). All three model types (`PortMapping`, `SinglePortMapping`, `PortMappingPreset`) are records; table models use arrow-syntax switch expressions; `SBBIRouter.removePortMapping` uses `Protocol.getName()` instead of a TCP/UDP ternary; light `var` sweep applied to short-lived Swing builder locals in `EditPresetDialog` (value-type declarations kept explicit on purpose). **Not done — deliberately deferred**:
+  - Sealed interface for `IRouter`. Skipped because the factory-by-FQCN-reflection pattern in `Settings` means subclasses aren't strictly enumerable. Would only make sense if we dropped dynamic factory loading.
+  - Pattern matching on `instanceof`. Codebase has near-zero downcasts; the readability win is marginal.
+  - Broader `var` sweep beyond Swing builders. Cosmetic; can land any time but provides little value over the targeted pass already done.
 - **Code review pass.** Use [code-review.md](code-review.md) as the checklist. Produces a dated `Code-Review-YYMMDD.md` deliverable.
 - **README polish: regenerate the `-h` help block** with picocli's actual output (commit `c131d28` changed the CLI help format). Low priority — flags listed still all work, only the literal rendering differs.
 - **Re-enable GitHub Actions** when the codebase stabilizes (currently disabled at repo level; re-enable via Settings → Actions → "Allow all actions" or `gh api -X PUT repos/The-Ant-Forge/Portmapper/actions/permissions -F enabled=true`).
