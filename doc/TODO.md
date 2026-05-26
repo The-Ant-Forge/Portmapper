@@ -36,7 +36,11 @@ Full plan: [bsaf-plan.md](bsaf-plan.md). Seven steps total.
 
 ## Backlog
 
-- **Modern Java idioms.** Records for `PortMapping`/`Protocol`/`SinglePortMapping`/`PortMappingPreset`, pattern matching where useful, judicious `var`, sealed interface for `IRouter` if it adds clarity. Sequence this **before** the code review so the review evaluates the modern shape rather than flagging legacy idioms that are about to disappear.
+- **Modern Java idioms — partial complete** (commit `38e5cdc`): `PortMapping` is now a record; both table models use arrow-syntax switch expressions. **Deferred — needs a deliberate user call**:
+  - `SinglePortMapping` → record and `PortMappingPreset` → record. Both are persisted to `settings.xml` via XMLEncoder. JavaBeans XML format (existing `<void property="X">...</void>` blocks) is NOT interchangeable with record XML format (positional canonical-constructor args). Converting silently destroys any saved presets on first launch. User's current `settings.xml` is small (151 bytes, likely no presets) so a reset would be a non-event in practice — but worth explicit acceptance before doing it.
+  - `var` sweep. Cosmetic. Tightens local-variable declarations where the type is obvious from the right-hand side. ~30 min, can land any time.
+  - Pattern matching on `instanceof` and switch labels. Modest opportunities in this codebase since downcasts are rare. The clearest candidate is `Protocol` switch-handling in `WeUPnPRouter.removePortMapping` and `SBBIRouter.removePortMapping` (currently if/else); could become switch expressions.
+  - Sealed interface for `IRouter`? Probably not — the factory-by-FQCN-reflection pattern in `Settings` means subclasses aren't strictly enumerable. Skip unless we drop dynamic factory loading.
 - **Code review pass.** Use [code-review.md](code-review.md) as the checklist. Produces a dated `Code-Review-YYMMDD.md` deliverable.
 - **README polish: regenerate the `-h` help block** with picocli's actual output (commit `c131d28` changed the CLI help format). Low priority — flags listed still all work, only the literal rendering differs.
 - **Re-enable GitHub Actions** when the codebase stabilizes (currently disabled at repo level; re-enable via Settings → Actions → "Allow all actions" or `gh api -X PUT repos/The-Ant-Forge/Portmapper/actions/permissions -F enabled=true`).
