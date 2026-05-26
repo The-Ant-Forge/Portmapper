@@ -18,7 +18,6 @@
 package org.chris.portmapper;
 
 import java.awt.Desktop;
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.InetAddress;
@@ -49,11 +48,6 @@ import org.slf4j.LoggerFactory;
 public class PortMapperApp extends SingleFrameApplication {
 
     /**
-     * The name of the system property which will be used as the directory where all configuration files will be stored.
-     */
-    private static final String CONFIG_DIR_PROPERTY_NAME = "portmapper.config.dir";
-
-    /**
      * The file name for the settings file.
      */
     private static final String SETTINGS_FILENAME = "settings.xml";
@@ -62,6 +56,7 @@ public class PortMapperApp extends SingleFrameApplication {
 
     private IRouter router;
     private Settings settings;
+    private SettingsStorage storage;
     private final LogMessageOutputStream logMessageOutputStream = new LogMessageOutputStream();
     private final LogbackConfiguration logbackConfig = new LogbackConfiguration();
 
@@ -69,7 +64,7 @@ public class PortMapperApp extends SingleFrameApplication {
     protected void startup() {
         logbackConfig.registerOutputStream(logMessageOutputStream);
 
-        setCustomConfigDir();
+        initStorage();
 
         loadSettings();
 
@@ -112,51 +107,31 @@ public class PortMapperApp extends SingleFrameApplication {
     }
 
     /**
-     * Read the system property with name {@link PortMapperApp#CONFIG_DIR_PROPERTY_NAME} and change the local storage
-     * directory if the property is given and points to a writable directory. If there is a directory named
-     * <code>PortMapperConf</code> in the current directory, use this as the configuration directory.
+     * Initialise {@link SettingsStorage}, which decides where the application's XML configuration
+     * is read from and written to. See {@link SettingsStorage#discover()} for the directory-selection
+     * precedence (system property, portable dir, OS default).
      */
-    private void setCustomConfigDir() {
-        final String customConfigurationDir = System.getProperty(CONFIG_DIR_PROPERTY_NAME);
-        final File portableAppConfigDir = new File("PortMapperConf");
-
-        // the property is set: check, if the given directory can be used
-        if (customConfigurationDir != null) {
-            final File dir = new File(customConfigurationDir);
-            if (!dir.isDirectory()) {
-                logger.error("Custom configuration directory '{}' is not a directory.", customConfigurationDir);
-                System.exit(1);
-            }
-            if (!dir.canRead() || !dir.canWrite()) {
-                logger.error("Can not read or write to custom configuration directory '{}'.", customConfigurationDir);
-                System.exit(1);
-            }
-            logger.info("Using custom configuration directory '{}'.", dir.getAbsolutePath());
-            getContext().getLocalStorage().setDirectory(dir);
-
-            // check, if the portable app directory exists and use this one
-        } else if (portableAppConfigDir.isDirectory() && portableAppConfigDir.canRead()
-                && portableAppConfigDir.canWrite()) {
-            logger.info("Found portable app configuration directory '{}'.", portableAppConfigDir.getAbsolutePath());
-            getContext().getLocalStorage().setDirectory(portableAppConfigDir);
-
-            // use the default configuration directory
-        } else {
-            logger.info("Using default configuration directory '{}'.",
-                    getContext().getLocalStorage().getDirectory().getAbsolutePath());
+    private void initStorage() {
+        try {
+            storage = SettingsStorage.discover();
+        } catch (final IllegalStateException e) {
+            logger.error("Could not initialise settings storage: {}", e.getMessage());
+            System.exit(1);
+            return;
         }
+        logger.info("Using configuration directory '{}'.", storage.getDirectory().getAbsolutePath());
     }
 
     /**
-     * Load the application settings from file {@link PortMapperApp#SETTINGS_FILENAME} located in the configuration
-     * directory.
+     * Load the application settings from {@link PortMapperApp#SETTINGS_FILENAME} in the storage
+     * directory. If the file is missing or can't be parsed, fall back to a fresh {@link Settings}.
      */
     private void loadSettings() {
         logger.debug("Loading settings from file {}", SETTINGS_FILENAME);
         try {
-            settings = (Settings) getContext().getLocalStorage().load(SETTINGS_FILENAME);
-        } catch (final IOException | ArrayIndexOutOfBoundsException e) {
-            logger.warn("Could not load settings from file " + SETTINGS_FILENAME, e);
+            settings = storage.load(SETTINGS_FILENAME, Settings.class);
+        } catch (final IOException e) {
+            logger.warn("Could not load settings from file {}; starting fresh.", SETTINGS_FILENAME, e);
         }
 
         if (settings == null) {
@@ -182,7 +157,7 @@ public class PortMapperApp extends SingleFrameApplication {
             }
         }
         try {
-            getContext().getLocalStorage().save(settings, SETTINGS_FILENAME);
+            storage.save(SETTINGS_FILENAME, settings);
         } catch (final IOException e) {
             logger.warn("Could not save settings to file " + SETTINGS_FILENAME, e);
         }
