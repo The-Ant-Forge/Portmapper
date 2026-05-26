@@ -23,9 +23,12 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 /**
  * File-based persistence for {@link Settings} (and any other JavaBean) using
@@ -149,20 +152,34 @@ public final class SettingsStorage {
      * Serialize a JavaBean-compliant object to {@code filename} in the
      * storage directory. Creates the directory if it does not yet exist.
      *
+     * <p>The write is atomic: data is written to a sibling {@code .tmp} file
+     * first, then renamed over the target with {@link StandardCopyOption#ATOMIC_MOVE}
+     * (falling back to a non-atomic replace on filesystems that don't support
+     * it). This prevents a crash mid-write from leaving {@code settings.xml}
+     * truncated and unparseable, which would otherwise silently discard every
+     * saved preset on the next launch.
+     *
      * @param filename the file under the storage directory.
      * @param object the object to write.
      * @throws IOException if the directory cannot be created or the file
      *         cannot be written.
      */
     public void save(final String filename, final Object object) throws IOException {
+        final Path dir = directory.toPath();
         if (!directory.exists()) {
-            Files.createDirectories(directory.toPath());
+            Files.createDirectories(dir);
         }
-        final File file = new File(directory, filename);
-        try (FileOutputStream out = new FileOutputStream(file);
+        final Path target = dir.resolve(filename);
+        final Path tmp = dir.resolve(filename + ".tmp");
+        try (OutputStream out = Files.newOutputStream(tmp);
              BufferedOutputStream bout = new BufferedOutputStream(out);
              XMLEncoder encoder = new XMLEncoder(bout)) {
             encoder.writeObject(object);
+        }
+        try {
+            Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (final AtomicMoveNotSupportedException e) {
+            Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 }

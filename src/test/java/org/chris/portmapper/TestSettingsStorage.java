@@ -18,6 +18,7 @@
 package org.chris.portmapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -94,5 +95,31 @@ class TestSettingsStorage {
         final File dir = SettingsStorage.defaultUserDirectory();
         assertNotNull(dir);
         assertTrue(dir.isAbsolute(), () -> "Expected absolute path, got: " + dir);
+    }
+
+    @Test
+    void saveLeavesNoTempFileBehindOnSuccess(@TempDir final Path dir) throws IOException {
+        final SettingsStorage storage = new SettingsStorage(dir.toFile());
+        storage.save("settings.xml", new Settings());
+        assertTrue(Files.exists(dir.resolve("settings.xml")));
+        assertFalse(Files.exists(dir.resolve("settings.xml.tmp")),
+                "Atomic-write tmp sibling must be moved into place, not left behind");
+    }
+
+    @Test
+    void saveDoesNotTruncateExistingFileIfTmpWriteFails(@TempDir final Path dir) throws IOException {
+        final SettingsStorage storage = new SettingsStorage(dir.toFile());
+        // Seed a good file from a prior session, then provoke a write failure by colliding with a
+        // directory at the tmp path. The original settings.xml must survive intact (the whole point of
+        // writing through a sibling tmp file).
+        final Settings prior = new Settings();
+        prior.setLogLevel("DEBUG");
+        storage.save("settings.xml", prior);
+        Files.createDirectory(dir.resolve("settings.xml.tmp"));
+
+        assertThrows(IOException.class, () -> storage.save("settings.xml", new Settings()));
+
+        final Settings reloaded = storage.load("settings.xml", Settings.class);
+        assertEquals("DEBUG", reloaded.getLogLevel());
     }
 }
