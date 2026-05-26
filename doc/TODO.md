@@ -9,10 +9,10 @@ Full plan: [bsaf-plan.md](bsaf-plan.md). Seven steps total.
 **Done:**
 
 - **Step 1: `OSXAdapter` → `java.awt.Desktop` API** (commit `9181568`). Renamed `registerMacOSXListeners` → `registerSystemMenuHandlers`; dropped reflection-based `getMethod` helper; dropped `AppHelper.getPlatform()` check (Desktop API self-guards via `isSupported`).
+- **Step 2: `ResourceMap` → static `Messages` utility** (commit `1a737d3`). New `org.chris.portmapper.Messages` class wraps a `ResourceBundle` plus recursive `${...}` placeholder substitution with cycle detection. 27 call sites migrated across 6 files. `app` field became orphaned in `PortMappingsTableModel` and `PortsTableModel` — removed along with the constructor parameter (cleaner signatures). 8 new tests in `TestMessages` covering live-bundle and synthetic-bundle scenarios. **Inventory caveat**: the earlier BSAF inventory subagent missed the table-model files; a direct grep before doing mechanical changes caught them. Lesson logged.
 
-**Remaining (steps 2–7):**
+**Remaining (steps 3–7):**
 
-2. **`ResourceMap` → `ResourceBundle`** — ~15 `app.getResourceMap().getString(...)` call sites across `PortMapperApp`, `PortMapperView`, `AddPortRangeDialog`, `EditPresetDialog`. BSAF's `ResourceMap` supports `${placeholder}` substitution (e.g. `${Application.title}`); JDK's `ResourceBundle` doesn't, so a small substitution helper is needed.
 3. **`LocalStorage` → `XMLEncoder`/`XMLDecoder`** — **highest risk**. 5 call sites in `PortMapperApp` (load/save + setDirectory). Format incompatibility with existing `settings.xml` is the load-bearing concern; back up `%AppData%\UnknownApplicationVendor\PortMapper\settings.xml` before testing. Decide migration story (one-shot rewrite vs accept settings reset).
 4. **`@Action` → direct `AbstractAction`/`ActionListener`** — 25 `@Action`-annotated methods across `AboutDialog`, `AddPortRangeDialog`, `EditPresetDialog`, `PortMapperView`, `SettingsDialog`. 8 `getActionMap` call sites. Recommend writing a small `ActionFactory` helper to avoid boilerplate.
 5. **`SingleFrameApplication` removal** — `PortMapperApp` stops extending it; replace `Application.launch` in `PortMapperCli` with manual JFrame setup; replicate or drop the window-position-persistence feature; convert the `addExitListener(...)` hook in `PortMapperApp.startup()` and `JUPnPRouterFactory`.
