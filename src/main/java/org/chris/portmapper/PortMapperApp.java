@@ -17,10 +17,10 @@
  */
 package org.chris.portmapper;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -41,9 +41,6 @@ import org.chris.portmapper.router.IRouter;
 import org.chris.portmapper.router.RouterException;
 import org.jdesktop.application.ResourceMap;
 import org.jdesktop.application.SingleFrameApplication;
-import org.jdesktop.application.utils.AppHelper;
-import org.jdesktop.application.utils.OSXAdapter;
-import org.jdesktop.application.utils.PlatformType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,22 +89,26 @@ public class PortMapperApp extends SingleFrameApplication {
 
         show(view);
 
-        if (AppHelper.getPlatform() == PlatformType.OS_X) {
-            registerMacOSXListeners();
+        registerSystemMenuHandlers();
+    }
+
+    /**
+     * Wire macOS-style system menu handlers (About, Preferences) to the application.
+     * On platforms that do not expose these (Windows, most Linux), {@link Desktop#isSupported}
+     * returns {@code false} for the specific actions and the handler is silently skipped, so
+     * this method is safe to call unconditionally.
+     */
+    private void registerSystemMenuHandlers() {
+        if (!Desktop.isDesktopSupported()) {
+            return;
         }
-    }
-
-    private void registerMacOSXListeners() {
+        final Desktop desktop = Desktop.getDesktop();
         final PortMapperView view = getView();
-        OSXAdapter.setPreferencesHandler(view, getMethod(PortMapperView.class, "changeSettings"));
-        OSXAdapter.setAboutHandler(view, getMethod(PortMapperView.class, "showAboutDialog"));
-    }
-
-    private static Method getMethod(final Class<?> clazz, final String name, final Class<?>... parameterTypes) {
-        try {
-            return clazz.getMethod(name, parameterTypes);
-        } catch (SecurityException | NoSuchMethodException e) {
-            throw new IllegalStateException("Error getting method " + name + " of class " + clazz.getName(), e);
+        if (desktop.isSupported(Desktop.Action.APP_PREFERENCES)) {
+            desktop.setPreferencesHandler(e -> view.changeSettings());
+        }
+        if (desktop.isSupported(Desktop.Action.APP_ABOUT)) {
+            desktop.setAboutHandler(e -> view.showAboutDialog());
         }
     }
 

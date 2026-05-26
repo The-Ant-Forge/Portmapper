@@ -29,8 +29,6 @@ import org.chris.portmapper.router.IRouter;
 import org.chris.portmapper.router.RouterException;
 import org.chris.portmapper.router.jupnp.JUPnPRouterFactory;
 import org.jdesktop.application.Application;
-import org.jdesktop.application.utils.AppHelper;
-import org.jdesktop.application.utils.PlatformType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,7 +98,7 @@ public class PortMapperCli {
     }
 
     private void startGui(final String[] args) {
-        if (AppHelper.getPlatform() == PlatformType.OS_X) {
+        if (System.getProperty("os.name", "").startsWith("Mac")) {
             MacSetup.setupMac();
         }
         Application.launch(PortMapperApp.class, args);
