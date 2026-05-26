@@ -82,19 +82,28 @@ public record PortMappingPreset(
     }
 
     /**
-     * @return a verbose human-readable rendering of this preset.
+     * @return a verbose human-readable rendering of this preset including the
+     *         remote host, internal client, description, and every port mapping.
+     *         Used by the in-app log on settings save.
      */
     public String getCompleteDescription() {
         final StringBuilder b = new StringBuilder();
-        b.append(" ");
-        b.append(remoteHost);
-        b.append(":");
-        b.append(" -> ");
-        b.append(internalClient);
-        b.append(":");
-        b.append(" ");
-        b.append(" ");
         b.append(description);
+        b.append(" [");
+        if (remoteHost != null) {
+            b.append(remoteHost);
+        }
+        b.append(" -> ");
+        b.append(useLocalhostAsInternalClient() ? "<localhost>" : internalClient);
+        b.append("]");
+        for (final SinglePortMapping port : ports) {
+            b.append(" ");
+            b.append(port.protocol());
+            b.append(" ");
+            b.append(port.externalPort());
+            b.append("->");
+            b.append(port.internalPort());
+        }
         return b.toString();
     }
 
