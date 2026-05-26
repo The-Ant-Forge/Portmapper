@@ -8,10 +8,6 @@ plugins {
 
 repositories {
     mavenCentral()
-    maven {
-        url 'http://4thline.org/m2'
-        allowInsecureProtocol true
-    }
     flatDir { dirs 'lib' }
 }
 
@@ -31,7 +27,7 @@ javadoc {
 }
 
 tasks.withType(JavaCompile) {
-    options.compilerArgs << '-Xlint:all'
+    options.compilerArgs << '-Xlint:all,-classfile'
     options.compilerArgs << '-Werror'
     options.encoding = 'UTF-8'
 }
@@ -79,7 +75,7 @@ dependencies {
     implementation 'com.miglayout:miglayout-swing:11.4.3'
     implementation 'org.jdesktop.bsaf:bsaf:1.9.2'
     implementation ':sbbi-upnplib:1.0.4'
-    implementation 'org.fourthline.cling:cling-support:2.1.2'
+    implementation 'org.jupnp:org.jupnp.support:3.0.4'
     implementation 'org.bitlet:weupnp:0.1.4'
 
     runtimeOnly 'commons-jxpath:commons-jxpath:1.1' // Version 1.1. required by sbbi

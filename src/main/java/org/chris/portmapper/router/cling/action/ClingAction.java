@@ -17,8 +17,8 @@
  */
 package org.chris.portmapper.router.cling.action;
 
-import org.fourthline.cling.model.action.ActionInvocation;
-import org.fourthline.cling.model.meta.RemoteService;
+import org.jupnp.model.action.ActionInvocation;
+import org.jupnp.model.meta.RemoteService;
 
 public interface ClingAction<T> {
 

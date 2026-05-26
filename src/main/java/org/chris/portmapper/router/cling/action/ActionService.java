@@ -21,11 +21,11 @@ import java.net.URL;
 
 import org.chris.portmapper.router.cling.ClingOperationFailedException;
 import org.chris.portmapper.router.cling.ClingRouterException;
-import org.fourthline.cling.controlpoint.ControlPoint;
-import org.fourthline.cling.model.action.ActionInvocation;
-import org.fourthline.cling.model.message.control.IncomingActionResponseMessage;
-import org.fourthline.cling.model.meta.RemoteService;
-import org.fourthline.cling.protocol.sync.SendingAction;
+import org.jupnp.controlpoint.ControlPoint;
+import org.jupnp.model.action.ActionInvocation;
+import org.jupnp.model.message.control.IncomingActionResponseMessage;
+import org.jupnp.model.meta.RemoteService;
+import org.jupnp.protocol.sync.SendingAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

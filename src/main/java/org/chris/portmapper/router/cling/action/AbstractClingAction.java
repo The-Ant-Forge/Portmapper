@@ -24,14 +24,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.chris.portmapper.router.cling.ClingRouterException;
-import org.fourthline.cling.model.action.ActionArgumentValue;
-import org.fourthline.cling.model.action.ActionInvocation;
-import org.fourthline.cling.model.meta.Action;
-import org.fourthline.cling.model.meta.ActionArgument;
-import org.fourthline.cling.model.meta.ActionArgument.Direction;
-import org.fourthline.cling.model.meta.RemoteDevice;
-import org.fourthline.cling.model.meta.RemoteService;
-import org.fourthline.cling.model.meta.Service;
+import org.jupnp.model.action.ActionArgumentValue;
+import org.jupnp.model.action.ActionInvocation;
+import org.jupnp.model.meta.Action;
+import org.jupnp.model.meta.ActionArgument;
+import org.jupnp.model.meta.ActionArgument.Direction;
+import org.jupnp.model.meta.RemoteDevice;
+import org.jupnp.model.meta.RemoteService;
+import org.jupnp.model.meta.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

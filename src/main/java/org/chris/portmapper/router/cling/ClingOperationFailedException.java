@@ -17,7 +17,7 @@
  */
 package org.chris.portmapper.router.cling;
 
-import org.fourthline.cling.model.message.control.IncomingActionResponseMessage;
+import org.jupnp.model.message.control.IncomingActionResponseMessage;
 
 public class ClingOperationFailedException extends ClingRouterException {
 

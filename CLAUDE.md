@@ -29,7 +29,6 @@ All commands use the Gradle wrapper. On Windows shells use `.\gradlew.bat`; ever
 | Run one test method | `./gradlew test --tests '*TestPortMappingExtractor.<methodName>'` |
 | Apply license headers to new files | `./gradlew licenseFormat` (required — see below) |
 | Check dependency updates | `./gradlew dependencyUpdates` |
-| Sonar analysis (needs Java 17+) | `./gradlew sonarqube` |
 | Build against a non-default JDK | `./gradlew build -PjavaVersion=24` (default is 21; CI only tests 21) |
 
 Built artifact location: `build/libs/portmapper-all.jar` (no version suffix — `shadowJar` clears `archiveVersion`). The end-user invocation is `java -jar build/libs/portmapper-all.jar`.
@@ -39,7 +38,7 @@ Built artifact location: `build/libs/portmapper-all.jar` (no version suffix — 
 - **`-Werror` + `-Xlint:all` + `javadoc.failOnError = true`** ([build.gradle](build.gradle)). A missing `@param`, unused import, or any javac warning fails the build. Keep new code lint-clean and javadoc-clean.
 - **License header enforcement** — the Hierynomus license plugin checks every source file against `gradle/license-header.txt`. Run `./gradlew licenseFormat` after adding new files or `build` will fail.
 - **`processResources` rewrites property filenames at build time**: `*_en.properties` becomes the default (no suffix), and `*_zh_CN.properties` becomes `*_zh.properties`. The token `@VERSION_NUMBER@` inside resources is substituted with `project.version`. If you reference a property bundle by name, remember the source filename ≠ the runtime filename for English/Chinese.
-- **Non-standard repos in build.gradle**: an insecure `http://4thline.org/m2` is whitelisted (required by the abandoned Cling dependency — slated for replacement with jUPnP), and `lib/` is a `flatDir` repository hosting the bundled `sbbi-upnplib-1.0.4.jar`. Don't remove these without replacing the affected dependency.
+- **Non-standard repo in build.gradle**: `lib/` is a `flatDir` repository hosting the bundled `sbbi-upnplib-1.0.4.jar`. Don't remove without replacing the SBBI backend (slated for a lifecycle decision in wave 2).
 - **Java 21 LTS is the language baseline.** All Java 21 features (records, pattern matching, sealed classes, virtual threads, etc.) are fair game.
 - **Norton TLS interception fix is required on this dev machine.** `~/.gradle/gradle.properties` contains `org.gradle.jvmargs=-Djavax.net.ssl.trustStoreType=Windows-ROOT` to make Gradle trust Norton's local root CA when resolving Maven Central. Without it, all `mavenCentral()` lookups fail with PKIX errors. See the `windows-norton-tls-mitm` memory entry for full context.
 
@@ -86,9 +85,14 @@ JUnit 4 + Mockito. Only one test class currently exists (`router/sbbi/TestPortMa
 
 Disconnect from upstream and Java 21 baseline are done. Outstanding modernization work, in rough priority order:
 
-1. **Bump Gradle wrapper to 9.x** — current 8.10.1 already emits "incompatible with Gradle 9.0" deprecation warnings. Likely requires swapping `com.github.johnrengelman.shadow:8.1.1` for its actively-maintained fork `com.gradleup.shadow`, and re-validating the `license` and `dependencyUpdates` plugins.
-2. **Replace Cling with jUPnP.** Cling (`org.fourthline.cling:cling-support:2.1.2`) is abandoned; jUPnP (`org.jupnp:org.jupnp`) is the active fork. Isolated to the `org.chris.portmapper.router.cling.*` package. After this, the `http://4thline.org/m2` insecure repo can be removed.
-3. **Replace BSAF.** `org.jdesktop.bsaf:bsaf:1.9.2` was last released ~2012 and may need `--add-opens` flags to run cleanly on Java 21+. Touches `PortMapperApp`, `PortMapperView`, all dialogs, and the settings-persistence layer.
-4. **Drop SBBI**, or vendor it more cleanly. The flatDir-hosted `lib/sbbi-upnplib-1.0.4.jar` is a 2008-era binary with no upstream activity.
+**Wave 1 complete** (Gradle 9, JUnit 5, dep bumps, test safety net, Cling→jUPnP).
 
-Do not bundle these into one PR-equivalent commit — each is a meaningful, testable, isolatable change.
+**Wave 2 candidates:**
+
+1. **Replace BSAF.** `org.jdesktop.bsaf:bsaf:1.9.2` was last released ~2012. Currently runs on Java 21 without `--add-opens` flags but the library is dead. Touches `PortMapperApp`, `PortMapperView`, all dialogs, and the BSAF `LocalStorage` settings-persistence layer — the biggest single change in the roadmap.
+2. **SBBI lifecycle decision.** The flatDir-hosted `lib/sbbi-upnplib-1.0.4.jar` is a 2008-era vendored binary. Options: drop entirely (if jUPnP+weupnp cover the use cases), keep as-is, or replace. After dropping, `commons-jxpath:1.1` (pinned only for SBBI compat) can come out too.
+3. **weupnp evaluation.** `org.bitlet:weupnp:0.1.4` from 2017, no active maintenance. Decide drop vs keep based on whether jUPnP covers the routers weupnp handled.
+4. **Rename `cling` package and `Cling*` classes** to `jupnp` / `JUPnP*` for code-clarity. Deferred from wave 1 because the FQCN `org.chris.portmapper.router.cling.ClingRouterFactory` is persisted in users' `settings.xml`; renaming triggers a first-launch glitch for anyone with an existing settings file.
+5. **Code review and modern Java idioms.** Use `doc/code-review.md` as the checklist. Records for `PortMapping`/`Protocol`/etc., pattern matching where it helps, judicious `var`.
+
+Do not bundle these into one commit — each is meaningful and isolatable.

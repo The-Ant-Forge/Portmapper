@@ -22,14 +22,14 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Stream;
 
-import org.fourthline.cling.model.meta.Device;
-import org.fourthline.cling.model.meta.Service;
-import org.fourthline.cling.model.types.DeviceType;
-import org.fourthline.cling.model.types.ServiceType;
-import org.fourthline.cling.model.types.UDADeviceType;
-import org.fourthline.cling.model.types.UDAServiceType;
-import org.fourthline.cling.registry.DefaultRegistryListener;
-import org.fourthline.cling.registry.Registry;
+import org.jupnp.model.meta.Device;
+import org.jupnp.model.meta.Service;
+import org.jupnp.model.types.DeviceType;
+import org.jupnp.model.types.ServiceType;
+import org.jupnp.model.types.UDADeviceType;
+import org.jupnp.model.types.UDAServiceType;
+import org.jupnp.registry.DefaultRegistryListener;
+import org.jupnp.registry.Registry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

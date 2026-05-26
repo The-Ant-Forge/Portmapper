@@ -23,7 +23,7 @@ import java.util.LinkedList;
 import org.chris.portmapper.model.PortMapping;
 import org.chris.portmapper.router.cling.action.ActionService;
 import org.chris.portmapper.router.cling.action.GetPortMappingEntryAction;
-import org.fourthline.cling.model.message.control.IncomingActionResponseMessage;
+import org.jupnp.model.message.control.IncomingActionResponseMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

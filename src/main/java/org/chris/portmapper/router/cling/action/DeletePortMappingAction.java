@@ -21,9 +21,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.chris.portmapper.model.PortMapping;
-import org.fourthline.cling.model.action.ActionInvocation;
-import org.fourthline.cling.model.meta.RemoteService;
-import org.fourthline.cling.model.types.UnsignedIntegerTwoBytes;
+import org.jupnp.model.action.ActionInvocation;
+import org.jupnp.model.meta.RemoteService;
+import org.jupnp.model.types.UnsignedIntegerTwoBytes;
 
 public class DeletePortMappingAction extends AbstractClingAction<Void> {
 

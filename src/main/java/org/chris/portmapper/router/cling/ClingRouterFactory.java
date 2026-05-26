@@ -27,13 +27,13 @@ import org.chris.portmapper.PortMapperApp;
 import org.chris.portmapper.router.AbstractRouterFactory;
 import org.chris.portmapper.router.IRouter;
 import org.chris.portmapper.router.RouterException;
-import org.fourthline.cling.DefaultUpnpServiceConfiguration;
-import org.fourthline.cling.UpnpService;
-import org.fourthline.cling.UpnpServiceConfiguration;
-import org.fourthline.cling.UpnpServiceImpl;
-import org.fourthline.cling.model.message.header.UDADeviceTypeHeader;
-import org.fourthline.cling.model.message.header.UpnpHeader;
-import org.fourthline.cling.model.meta.RemoteService;
+import org.jupnp.DefaultUpnpServiceConfiguration;
+import org.jupnp.UpnpService;
+import org.jupnp.UpnpServiceConfiguration;
+import org.jupnp.UpnpServiceImpl;
+import org.jupnp.model.message.header.UDADeviceTypeHeader;
+import org.jupnp.model.message.header.UpnpHeader;
+import org.jupnp.model.meta.RemoteService;
 import org.jdesktop.application.Application.ExitListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +51,9 @@ public class ClingRouterFactory extends AbstractRouterFactory {
     protected List<IRouter> findRoutersInternal() throws RouterException {
         final UpnpServiceConfiguration config = new DefaultUpnpServiceConfiguration();
         final ClingRegistryListener clingRegistryListener = new ClingRegistryListener();
-        final UpnpService upnpService = new UpnpServiceImpl(config, clingRegistryListener);
+        final UpnpService upnpService = new UpnpServiceImpl(config);
+        upnpService.getRegistry().addListener(clingRegistryListener);
+        upnpService.startup();
         shutdownServiceOnExit(upnpService);
 
         final UpnpHeader<?> searchType = new UDADeviceTypeHeader(ClingRegistryListener.IGD_DEVICE_TYPE);
