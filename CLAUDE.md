@@ -91,7 +91,7 @@ Disconnect from upstream and Java 21 baseline are done. Outstanding modernizatio
 
 **Wave 2 candidates:**
 
-1. **Replace BSAF.** `org.jdesktop.bsaf:bsaf:1.9.2` was last released ~2012. Currently runs on Java 21 without `--add-opens` flags but the library is dead. Touches `PortMapperApp`, `PortMapperView`, all dialogs, and the BSAF `LocalStorage` settings-persistence layer — the biggest single change in the roadmap.
+1. **Replace BSAF.** `org.jdesktop.bsaf:bsaf:1.9.2` was last released ~2012. Currently runs on Java 21 without `--add-opens` flags but the library is dead. **Detailed plan at [doc/bsaf-plan.md](doc/bsaf-plan.md)** — breaks the work into 5 distinct pieces with recommended execution order and the settings-format-compat risk called out. This is wave 2's headline task; pick it up from there.
 2. **SBBI lifecycle decision.** The flatDir-hosted `lib/sbbi-upnplib-1.0.4.jar` is a 2008-era vendored binary. Options: drop entirely (if jUPnP+weupnp cover the use cases), keep as-is, or replace. After dropping, `commons-jxpath:1.1` (pinned only for SBBI compat) can come out too.
 3. **weupnp evaluation.** `org.bitlet:weupnp:0.1.4` from 2017, no active maintenance. Decide drop vs keep based on whether jUPnP covers the routers weupnp handled.
 4. **Rename `cling` package and `Cling*` classes** to `jupnp` / `JUPnP*` for code-clarity. Deferred from wave 1 because the FQCN `org.chris.portmapper.router.cling.ClingRouterFactory` is persisted in users' `settings.xml`; renaming triggers a first-launch glitch for anyone with an existing settings file.
