@@ -1,14 +1,9 @@
 plugins {
     id 'java'
-    id 'signing'
-    id 'maven-publish'
     id 'jacoco'
     id "com.github.hierynomus.license" version "0.16.1"
-    id "org.sonarqube" version "5.1.0.4882"
     id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id "io.github.gradle-nexus.publish-plugin" version "2.0.0"
     id 'com.github.ben-manes.versions' version '0.51.0'
-    id 'org.gradle.crypto.checksum' version '1.4.0'
 }
 
 repositories {
@@ -20,22 +15,19 @@ repositories {
     flatDir { dirs 'lib' }
 }
 
-version = '2.2.4'
-group 'com.github.kaklakariada'
+version = '3.0.0-SNAPSHOT'
+group 'org.theantforge.portmapper'
 
 java {
     toolchain {
-        def javaVersion = project.hasProperty('javaVersion') ? project.getProperty('javaVersion') : 11
+        def javaVersion = project.hasProperty('javaVersion') ? project.getProperty('javaVersion') : 21
         languageVersion = JavaLanguageVersion.of(javaVersion)
     }
-    withJavadocJar()
-    withSourcesJar()
 }
 
 javadoc {
     failOnError = true
     options.addBooleanOption('html5', true)
-    //options.addStringOption('Xwerror', '-quiet')
 }
 
 tasks.withType(JavaCompile) {
@@ -72,25 +64,10 @@ jar {
 
 tasks["build"].dependsOn(shadowJar)
 
-task createSha512ChecksumExecutableJar(type: org.gradle.crypto.checksum.Checksum, dependsOn: [tasks.shadowJar]) {
-    files = files(tasks.shadowJar.outputs.files)
-    outputDir = new File(project.buildDir, "libs-checksums")
-    algorithm = org.gradle.crypto.checksum.Checksum.Algorithm.SHA512
-    appendFileNameToChecksum = false
-}
-
-tasks.shadowJar.configure {
-    finalizedBy createSha512ChecksumExecutableJar
-}
-
 task run(type: JavaExec, dependsOn: shadowJar) {
     classpath = shadowJar.outputs.files
     mainClass = mainClass
     workingDir = rootProject.projectDir
-}
-
-artifacts {
-    archives shadowJar
 }
 
 dependencies {
@@ -118,63 +95,6 @@ jacocoTestReport {
     dependsOn test
     reports {
         xml.required = true
-    }
-}
-
-sonar {
-  properties {
-    property("sonar.organization", "kaklakariada-github")
-    property("sonar.host.url", "https://sonarcloud.io")
-  }
-}
-
-tasks["sonarqube"].dependsOn(tasks["jacocoTestReport"])
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            pom {
-                name = 'UPnP Portmapper'
-                description = 'A tool for managing port forwardings via UPnP'
-                url = 'https://github.com/kaklakariada/portmapper'
-
-                licenses {
-                    license {
-                        name = 'GNU General Public License, Version 3.0'
-                        url = 'https://www.gnu.org/licenses/gpl-3.0.txt'
-                    }
-                }
-                developers {
-                    developer {
-                        id = 'kaklakariada'
-                        name = 'Christoph'
-                        email = 'kaklakariada@chp1.net'
-                    }
-                }
-                scm {
-                    connection = 'scm:git:https://github.com/kaklakariada/portmapper.git'
-                    developerConnection = 'scm:git:https://github.com/kaklakariada/portmapper.git'
-                    url = 'https://github.com/kaklakariada/portmapper'
-                }
-            }
-        }
-    }
-}
-
-signing {
-    def signingKey = findProperty("signingKey")
-    def signingPassword = findProperty("signingPassword")
-    useInMemoryPgpKeys(signingKey, signingPassword)
-    sign publishing.publications.mavenJava
-}
-
-nexusPublishing {
-    packageGroup = project.group
-    repositories {
-        sonatype {
-            stagingProfileId = "4f1b95618be44"
-        }
     }
 }
 

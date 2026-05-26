@@ -16,9 +16,5 @@
     "java.codeGeneration.useBlocks": true,
     "java.configuration.updateBuildConfiguration": "automatic",
     "editor.formatOnSave": true,
-    "editor.formatOnSaveMode": "modificationsIfAvailable",
-    "sonarlint.connectedMode.project": {
-        "connectionId": "kaklakariada-github",
-        "projectKey": "com.github.kaklakariada:portmapper"
-    }
+    "editor.formatOnSaveMode": "modificationsIfAvailable"
 }
