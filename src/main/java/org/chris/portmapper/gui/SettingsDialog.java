@@ -57,7 +57,7 @@ public class SettingsDialog extends JDialog {
     private static final List<String> AVAILABLE_ROUTER_FACTORIES = Arrays.asList(ClingRouterFactory.class.getName(),
             SBBIRouterFactory.class.getName(), WeUPnPRouterFactory.class.getName(), DummyRouterFactory.class.getName());
 
-    private static final List<Level> AVAILABLE_LOG_LEVELS = Arrays.asList(Level.ALL, Level.TRACE, Level.DEBUG,
+    private static final List<Level> AVAILABLE_LOG_LEVELS = Arrays.asList(Level.TRACE, Level.DEBUG,
             Level.INFO, Level.WARN, Level.ERROR, Level.OFF);
 
     private static final long serialVersionUID = 1L;
