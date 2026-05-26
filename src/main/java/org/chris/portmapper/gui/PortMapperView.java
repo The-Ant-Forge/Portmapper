@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import javax.swing.ActionMap;
+import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -41,13 +41,13 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.Border;
 
+import org.chris.portmapper.Actions;
 import org.chris.portmapper.Messages;
 import org.chris.portmapper.PortMapperApp;
 import org.chris.portmapper.model.PortMapping;
 import org.chris.portmapper.model.PortMappingPreset;
 import org.chris.portmapper.router.IRouter;
 import org.chris.portmapper.router.RouterException;
-import org.jdesktop.application.Action;
 import org.jdesktop.application.FrameView;
 import org.jdesktop.application.Task;
 import org.slf4j.Logger;
@@ -113,7 +113,6 @@ public class PortMapperView extends FrameView {
     }
 
     private JComponent getRouterPanel() {
-        final ActionMap actionMap = this.getContext().getActionMap(this.getClass(), this);
         final JPanel routerPanel = new JPanel(new MigLayout("", "[fill, grow][]", ""));
         routerPanel
                 .setBorder(BorderFactory.createTitledBorder(Messages.get("mainFrame.router.title")));
@@ -121,32 +120,40 @@ public class PortMapperView extends FrameView {
         routerPanel.add(new JLabel(Messages.get("mainFrame.router.external_address")), "align label"); //$NON-NLS-2$
         externalIPLabel = new JLabel(Messages.get(MAIN_FRAME_ROUTER_NOT_CONNECTED));
         routerPanel.add(externalIPLabel, "width 130!");
-        routerPanel.add(new JButton(actionMap.get(ACTION_COPY_EXTERNAL_ADDRESS)), "sizegroup router");
-        routerPanel.add(new JButton(actionMap.get(ACTION_UPDATE_ADDRESSES)),
+        routerPanel.add(new JButton(Actions.createBound(ACTION_COPY_EXTERNAL_ADDRESS,
+                e -> copyExternalAddress(), this, PROPERTY_ROUTER_CONNECTED, isConnectedToRouter())),
+                "sizegroup router");
+        routerPanel.add(new JButton(Actions.createBound(ACTION_UPDATE_ADDRESSES,
+                e -> updateAddresses(), this, PROPERTY_ROUTER_CONNECTED, isConnectedToRouter())),
                 "wrap, spany 2, aligny base, sizegroup router");
 
         routerPanel.add(new JLabel(Messages.get("mainFrame.router.internal_address")), "align label");
         internalIPLabel = new JLabel(Messages.get(MAIN_FRAME_ROUTER_NOT_CONNECTED));
         routerPanel.add(internalIPLabel, "width 130!");
-        routerPanel.add(new JButton(actionMap.get(ACTION_COPY_INTERNAL_ADDRESS)), "wrap, sizegroup router");
+        routerPanel.add(new JButton(Actions.createBound(ACTION_COPY_INTERNAL_ADDRESS,
+                e -> copyInternalAddress(), this, PROPERTY_ROUTER_CONNECTED, isConnectedToRouter())),
+                "wrap, sizegroup router");
 
-        final JButton connectDisconnectButton = new JButton(actionMap.get(ACTION_CONNECT_ROUTER));
+        // Keep both connect and disconnect Actions as locals so the
+        // property-change listener can swap between them as connection state flips.
+        final Action connectAction = Actions.create(ACTION_CONNECT_ROUTER, e -> connectRouter());
+        final Action disconnectAction = Actions.create(ACTION_DISCONNECT_ROUTER, e -> disconnectRouter());
+        final JButton connectDisconnectButton = new JButton(connectAction);
         routerPanel.add(connectDisconnectButton, "");
-        routerPanel.add(new JButton(actionMap.get(ACTION_DISPLAY_ROUTER_INFO)), "sizegroup router");
-        routerPanel.add(new JButton(actionMap.get(ACTION_SHOW_ABOUT_DIALOG)), "sizegroup router, wrap");
+        routerPanel.add(new JButton(Actions.createBound(ACTION_DISPLAY_ROUTER_INFO,
+                e -> displayRouterInfo(), this, PROPERTY_ROUTER_CONNECTED, isConnectedToRouter())),
+                "sizegroup router");
+        routerPanel.add(new JButton(Actions.create(ACTION_SHOW_ABOUT_DIALOG, e -> showAboutDialog())),
+                "sizegroup router, wrap");
 
         this.addPropertyChangeListener(evt -> {
-            if (evt.getPropertyName().equals(PROPERTY_ROUTER_CONNECTED)) {
+            if (PROPERTY_ROUTER_CONNECTED.equals(evt.getPropertyName())) {
                 logger.debug("Connection state changed to {}", evt.getNewValue());
-
-                if (evt.getNewValue().equals(Boolean.TRUE)) {
-                    connectDisconnectButton.setAction(actionMap.get(ACTION_DISCONNECT_ROUTER));
-                } else {
-                    connectDisconnectButton.setAction(actionMap.get(ACTION_CONNECT_ROUTER));
-                }
+                connectDisconnectButton.setAction(
+                        Boolean.TRUE.equals(evt.getNewValue()) ? disconnectAction : connectAction);
             }
         });
-        routerPanel.add(new JButton(actionMap.get(ACTION_PORTMAPPER_SETTINGS)), "");
+        routerPanel.add(new JButton(Actions.create(ACTION_PORTMAPPER_SETTINGS, e -> changeSettings())), "");
 
         return routerPanel;
     }
@@ -169,8 +176,6 @@ public class PortMapperView extends FrameView {
     }
 
     private JComponent getPresetPanel() {
-        final ActionMap actionMap = this.getContext().getActionMap(this.getClass(), this);
-
         final JPanel presetPanel = new JPanel(new MigLayout("", "[grow, fill][]", ""));
         presetPanel.setBorder(BorderFactory
                 .createTitledBorder(Messages.get("mainFrame.port_mapping_presets.title")));
@@ -186,18 +191,23 @@ public class PortMapperView extends FrameView {
 
         presetPanel.add(new JScrollPane(portMappingPresets), "spany 4, grow");
 
-        presetPanel.add(new JButton(actionMap.get(ACTION_CREATE_PRESET_MAPPING)), "wrap, sizegroup preset_buttons");
-        presetPanel.add(new JButton(actionMap.get(ACTION_EDIT_PRESET_MAPPING)), "wrap, sizegroup preset_buttons");
-        presetPanel.add(new JButton(actionMap.get(ACTION_REMOVE_PRESET_MAPPING)), "wrap, sizegroup preset_buttons");
-        presetPanel.add(new JButton(actionMap.get(ACTION_USE_PRESET_MAPPING)), "wrap, sizegroup preset_buttons");
+        presetPanel.add(new JButton(Actions.create(ACTION_CREATE_PRESET_MAPPING,
+                e -> createPresetMapping())), "wrap, sizegroup preset_buttons");
+        presetPanel.add(new JButton(Actions.createBound(ACTION_EDIT_PRESET_MAPPING,
+                e -> editPresetMapping(), this, PROPERTY_PRESET_MAPPING_SELECTED, isPresetMappingSelected())),
+                "wrap, sizegroup preset_buttons");
+        presetPanel.add(new JButton(Actions.createBound(ACTION_REMOVE_PRESET_MAPPING,
+                e -> removePresetMapping(), this, PROPERTY_PRESET_MAPPING_SELECTED, isPresetMappingSelected())),
+                "wrap, sizegroup preset_buttons");
+        presetPanel.add(new JButton(Actions.createBound(ACTION_USE_PRESET_MAPPING,
+                e -> addPresetMapping(), this, PROPERTY_PRESET_MAPPING_SELECTED, isPresetMappingSelected())),
+                "wrap, sizegroup preset_buttons");
 
         return presetPanel;
     }
 
     private JComponent getMappingsPanel() {
         // Mappings panel
-
-        final ActionMap actionMap = this.getContext().getActionMap(this.getClass(), this);
 
         tableModel = new PortMappingsTableModel();
         mappingsTable = new JTable(tableModel);
@@ -217,12 +227,13 @@ public class PortMapperView extends FrameView {
         mappingsPanel.setBorder(panelBorder);
         mappingsPanel.add(mappingsTabelPane, "height 100::, span 2, wrap");
 
-        mappingsPanel.add(new JButton(actionMap.get(ACTION_REMOVE_MAPPINGS)), "");
-        mappingsPanel.add(new JButton(actionMap.get(ACTION_UPDATE_PORT_MAPPINGS)), "wrap");
+        mappingsPanel.add(new JButton(Actions.createBound(ACTION_REMOVE_MAPPINGS,
+                e -> removeMappings(), this, PROPERTY_MAPPING_SELECTED, isMappingSelected())), "");
+        mappingsPanel.add(new JButton(Actions.createBound(ACTION_UPDATE_PORT_MAPPINGS,
+                e -> updatePortMappings(), this, PROPERTY_ROUTER_CONNECTED, isConnectedToRouter())), "wrap");
         return mappingsPanel;
     }
 
-    @Action(name = ACTION_UPDATE_ADDRESSES, enabledProperty = PROPERTY_ROUTER_CONNECTED)
     public void updateAddresses() {
         final IRouter router = app.getRouter();
         if (router == null) {
@@ -241,12 +252,19 @@ public class PortMapperView extends FrameView {
         }
     }
 
-    @Action(name = ACTION_CONNECT_ROUTER)
-    public Task<Void, Void> connectRouter() {
-        return new ConnectTask(app);
+    /**
+     * Start the async connect-to-router task. Previously BSAF's {@code @Action}
+     * recognised a {@code Task} return type and auto-submitted it to the
+     * application's task service; we now submit explicitly. The
+     * {@code app.getContext().getTaskService()} reference is BSAF-owned and
+     * will be replaced when {@code SingleFrameApplication} comes out in
+     * step 5.
+     */
+    public void connectRouter() {
+        final Task<Void, Void> task = new ConnectTask(app);
+        app.getContext().getTaskService().execute(task);
     }
 
-    @Action(name = ACTION_DISCONNECT_ROUTER)
     public void disconnectRouter() {
         app.disconnectRouter();
         updateAddresses();
@@ -271,7 +289,6 @@ public class PortMapperView extends FrameView {
         this.updatePortMappings();
     }
 
-    @Action(name = ACTION_REMOVE_MAPPINGS, enabledProperty = PROPERTY_MAPPING_SELECTED)
     public void removeMappings() {
         final Collection<PortMapping> selectedMappings = this.getSelectedPortMappings();
         for (final PortMapping mapping : selectedMappings) {
@@ -289,7 +306,6 @@ public class PortMapperView extends FrameView {
         }
     }
 
-    @Action(name = ACTION_DISPLAY_ROUTER_INFO, enabledProperty = PROPERTY_ROUTER_CONNECTED)
     public void displayRouterInfo() {
         final IRouter router = app.getRouter();
         if (router == null) {
@@ -303,22 +319,18 @@ public class PortMapperView extends FrameView {
         }
     }
 
-    @Action(name = ACTION_SHOW_ABOUT_DIALOG)
     public void showAboutDialog() {
         app.show(new AboutDialog(app));
     }
 
-    @Action(name = ACTION_COPY_INTERNAL_ADDRESS, enabledProperty = PROPERTY_ROUTER_CONNECTED)
     public void copyInternalAddress() {
         this.copyTextToClipboard(this.internalIPLabel.getText());
     }
 
-    @Action(name = ACTION_COPY_EXTERNAL_ADDRESS, enabledProperty = PROPERTY_ROUTER_CONNECTED)
     public void copyExternalAddress() {
         this.copyTextToClipboard(this.externalIPLabel.getText());
     }
 
-    @Action(name = ACTION_UPDATE_PORT_MAPPINGS, enabledProperty = PROPERTY_ROUTER_CONNECTED)
     public void updatePortMappings() {
         final IRouter router = app.getRouter();
         if (router == null) {
@@ -334,7 +346,6 @@ public class PortMapperView extends FrameView {
         }
     }
 
-    @Action(name = ACTION_USE_PRESET_MAPPING, enabledProperty = PROPERTY_PRESET_MAPPING_SELECTED)
     public void addPresetMapping() {
         final PortMappingPreset selectedItem = this.portMappingPresets.getSelectedValue();
         if (selectedItem != null) {
@@ -349,24 +360,20 @@ public class PortMapperView extends FrameView {
         }
     }
 
-    @Action(name = ACTION_CREATE_PRESET_MAPPING)
     public void createPresetMapping() {
         app.show(new EditPresetDialog(app, new PortMappingPreset()));
     }
 
-    @Action(name = ACTION_EDIT_PRESET_MAPPING, enabledProperty = PROPERTY_PRESET_MAPPING_SELECTED)
     public void editPresetMapping() {
         final PortMappingPreset selectedPreset = this.portMappingPresets.getSelectedValue();
         app.show(new EditPresetDialog(app, selectedPreset));
     }
 
-    @Action(name = ACTION_PORTMAPPER_SETTINGS)
     public void changeSettings() {
         logger.debug("Open Settings dialog");
         app.show(new SettingsDialog(app));
     }
 
-    @Action(name = ACTION_REMOVE_PRESET_MAPPING, enabledProperty = PROPERTY_PRESET_MAPPING_SELECTED)
     public void removePresetMapping() {
         final PortMappingPreset selectedPreset = this.portMappingPresets.getSelectedValue();
         app.getSettings().removePresets(selectedPreset);

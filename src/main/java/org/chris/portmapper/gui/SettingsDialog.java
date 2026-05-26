@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
-import javax.swing.ActionMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -34,13 +33,13 @@ import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.WindowConstants;
 
+import org.chris.portmapper.Actions;
 import org.chris.portmapper.PortMapperApp;
 import org.chris.portmapper.Settings;
-import org.chris.portmapper.router.jupnp.JUPnPRouterFactory;
 import org.chris.portmapper.router.dummy.DummyRouterFactory;
+import org.chris.portmapper.router.jupnp.JUPnPRouterFactory;
 import org.chris.portmapper.router.sbbi.SBBIRouterFactory;
 import org.chris.portmapper.router.weupnp.WeUPnPRouterFactory;
-import org.jdesktop.application.Action;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,7 +105,6 @@ public class SettingsDialog extends JDialog {
     }
 
     private JPanel getDialogPane() {
-        final ActionMap actionMap = app.getContext().getActionMap(this.getClass(), this);
         final Settings settings = app.getSettings();
 
         final JPanel dialogPane = new JPanel(new MigLayout("", // Layout
@@ -133,8 +131,8 @@ public class SettingsDialog extends JDialog {
         routerFactoryClassComboBox.setSelectedItem(settings.getRouterFactoryClassName());
         dialogPane.add(routerFactoryClassComboBox, "span 2, wrap");
 
-        dialogPane.add(new JButton(actionMap.get(ACTION_CANCEL)), "tag cancel, span 2");
-        okButton = new JButton(actionMap.get(ACTION_SAVE));
+        dialogPane.add(new JButton(Actions.create(ACTION_CANCEL, e -> cancel())), "tag cancel, span 2");
+        okButton = new JButton(Actions.create(ACTION_SAVE, e -> save()));
         dialogPane.add(okButton, "tag ok, wrap");
 
         return dialogPane;
@@ -143,7 +141,6 @@ public class SettingsDialog extends JDialog {
     /**
      * This method is executed when the user clicks the save button. The method saves the entered preset
      */
-    @Action(name = ACTION_SAVE)
     public void save() {
         final Settings settings = app.getSettings();
         settings.setUseEntityEncoding(useEntityEncoding.isSelected());
@@ -156,7 +153,6 @@ public class SettingsDialog extends JDialog {
         this.dispose();
     }
 
-    @Action(name = ACTION_CANCEL)
     public void cancel() {
         this.dispose();
     }

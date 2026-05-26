@@ -20,7 +20,6 @@ package org.chris.portmapper.gui;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
-import javax.swing.ActionMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -28,9 +27,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
+import org.chris.portmapper.Actions;
 import org.chris.portmapper.PortMapperApp;
 import org.chris.portmapper.gui.util.URLLabel;
-import org.jdesktop.application.Action;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -47,7 +46,6 @@ public class AboutDialog extends JDialog {
         super(app.getMainFrame(), true);
 
         this.setName(DIALOG_NAME);
-        final ActionMap actionMap = app.getContext().getActionMap(this.getClass(), this);
 
         final JPanel pane = new JPanel(new MigLayout("", "[center,grow]", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         this.add(pane);
@@ -67,7 +65,7 @@ public class AboutDialog extends JDialog {
         pane.add(createLabel("about_dialog.label5"), "wrap related");
         pane.add(new URLLabel("about_dialog.homepage_label"), //$NON-NLS-1$
                 "wrap unrelated"); //$NON-NLS-1$
-        pane.add(new JButton(actionMap.get(ACTION_CLOSE)));
+        pane.add(new JButton(Actions.create(ACTION_CLOSE, e -> close())));
 
         // Register an action listener that closes the window when the ESC
         // button is pressed
@@ -79,7 +77,6 @@ public class AboutDialog extends JDialog {
         this.pack();
     }
 
-    @Action(name = ACTION_CLOSE)
     public void close() {
         setVisible(false);
         this.dispose();

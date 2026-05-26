@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
@@ -43,14 +42,14 @@ import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
 
+import org.chris.portmapper.Actions;
+import org.chris.portmapper.Messages;
 import org.chris.portmapper.PortMapperApp;
 import org.chris.portmapper.Settings;
 import org.chris.portmapper.model.PortMapping;
 import org.chris.portmapper.model.PortMappingPreset;
 import org.chris.portmapper.model.Protocol;
 import org.chris.portmapper.model.SinglePortMapping;
-import org.jdesktop.application.Action;
-import org.chris.portmapper.Messages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -145,8 +144,6 @@ public class EditPresetDialog extends JDialog {
     }
 
     private void initComponents() {
-        final ActionMap actionMap = app.getContext().getActionMap(this.getClass(), this);
-
         final JPanel dialogPane = new JPanel(new MigLayout("", // Layout
                 // Constraints
                 "[right]rel[left,grow 100]", // Column Constraints
@@ -197,8 +194,8 @@ public class EditPresetDialog extends JDialog {
 
         dialogPane.add(getPortsPanel(), "span 3, grow, wrap");
 
-        dialogPane.add(new JButton(actionMap.get(ACTION_CANCEL)), "tag cancel, span 2");
-        final JButton okButton = new JButton(actionMap.get(ACTION_SAVE));
+        dialogPane.add(new JButton(Actions.create(ACTION_CANCEL, e -> cancel())), "tag cancel, span 2");
+        final JButton okButton = new JButton(Actions.create(ACTION_SAVE, e -> save()));
         dialogPane.add(okButton, "tag ok, wrap");
 
         setContentPane(dialogPane);
@@ -209,8 +206,6 @@ public class EditPresetDialog extends JDialog {
     }
 
     private Component getPortsPanel() {
-        final ActionMap actionMap = app.getContext().getActionMap(this.getClass(), this);
-
         final JPanel portsPanel = new JPanel(new MigLayout("", "", ""));
         portsPanel.setBorder(
                 BorderFactory.createTitledBorder(Messages.get("preset_dialog.ports.title")));
@@ -227,9 +222,10 @@ public class EditPresetDialog extends JDialog {
 
         portsPanel.add(new JScrollPane(portsTable), "spany 3");
 
-        portsPanel.add(new JButton(actionMap.get(ACTION_ADD_PORT)), "wrap");
-        portsPanel.add(new JButton(actionMap.get(ACTION_ADD_PORT_RANGE)), "wrap");
-        portsPanel.add(new JButton(actionMap.get(ACTION_REMOVE_PORT)), "wrap");
+        portsPanel.add(new JButton(Actions.create(ACTION_ADD_PORT, e -> addPort())), "wrap");
+        portsPanel.add(new JButton(Actions.create(ACTION_ADD_PORT_RANGE, e -> addPortRange())), "wrap");
+        portsPanel.add(new JButton(Actions.createBound(ACTION_REMOVE_PORT, e -> removePort(),
+                this, PROPERTY_PORT_SELECTED, isPortSelected())), "wrap");
 
         return portsPanel;
     }
@@ -243,7 +239,6 @@ public class EditPresetDialog extends JDialog {
         }
     }
 
-    @Action(name = ACTION_ADD_PORT)
     public void addPort() {
         addPort(Protocol.TCP, 1, 1);
     }
@@ -254,13 +249,11 @@ public class EditPresetDialog extends JDialog {
         propertyChangeSupport.firePropertyChange(PROPERTY_PORTS, null, this.ports);
     }
 
-    @Action(name = ACTION_ADD_PORT_RANGE)
     public void addPortRange() {
         LOG.debug("Open port range dialog");
         app.show(new AddPortRangeDialog(app, this));
     }
 
-    @Action(name = ACTION_REMOVE_PORT, enabledProperty = PROPERTY_PORT_SELECTED)
     public void removePort() {
 
         // We have to delete the rows in descending order, else the wrong
@@ -289,7 +282,6 @@ public class EditPresetDialog extends JDialog {
     /**
      * This method is executed when the user clicks the save button. The method saves the entered preset
      */
-    @Action(name = ACTION_SAVE)
     public void save() {
 
         // Check, if the user entered a name for the preset and show an error
@@ -331,7 +323,6 @@ public class EditPresetDialog extends JDialog {
         this.dispose();
     }
 
-    @Action(name = ACTION_CANCEL)
     public void cancel() {
         this.setVisible(false);
         this.dispose();

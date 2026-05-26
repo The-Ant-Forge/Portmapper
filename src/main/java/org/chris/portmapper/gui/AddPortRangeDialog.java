@@ -21,7 +21,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-import javax.swing.ActionMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -34,10 +33,10 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.WindowConstants;
 
+import org.chris.portmapper.Actions;
+import org.chris.portmapper.Messages;
 import org.chris.portmapper.PortMapperApp;
 import org.chris.portmapper.model.Protocol;
-import org.jdesktop.application.Action;
-import org.chris.portmapper.Messages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,12 +71,9 @@ public class AddPortRangeDialog extends JDialog {
 
     private JComboBox<Protocol> protocolComboBox;
 
-    private final transient PortMapperApp app;
-
     @SuppressWarnings("this-escape")
     public AddPortRangeDialog(final PortMapperApp app, final EditPresetDialog editPresetDialog) {
         super(app.getMainFrame(), true);
-        this.app = app;
 
         this.editPresetDialog = editPresetDialog;
 
@@ -192,9 +188,8 @@ public class AddPortRangeDialog extends JDialog {
         dialogPane.add(createLabel("internal_ports_to"));
         dialogPane.add(internalPortTo, "wrap");
 
-        final ActionMap actionMap = app.getContext().getActionMap(this.getClass(), this);
-        dialogPane.add(new JButton(actionMap.get(ACTION_CANCEL)), "tag cancel, span 2");
-        okButton = new JButton(actionMap.get(ACTION_ADD));
+        dialogPane.add(new JButton(Actions.create(ACTION_CANCEL, e -> cancel())), "tag cancel, span 2");
+        okButton = new JButton(Actions.create(ACTION_ADD, e -> addPortRange()));
         dialogPane.add(okButton, "tag ok, span 2, wrap");
 
         return dialogPane;
@@ -203,7 +198,6 @@ public class AddPortRangeDialog extends JDialog {
     /**
      * This method is executed when the user clicks the save button. The method saves the entered preset
      */
-    @Action(name = ACTION_ADD)
     public void addPortRange() {
         final int newInternalPortFrom;
         final int newInternalPortTo;
@@ -254,7 +248,6 @@ public class AddPortRangeDialog extends JDialog {
                 JOptionPane.ERROR_MESSAGE);
     }
 
-    @Action(name = ACTION_CANCEL)
     public void cancel() {
         this.dispose();
     }
