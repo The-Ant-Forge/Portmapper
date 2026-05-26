@@ -18,96 +18,153 @@
 package org.chris.portmapper;
 
 import org.chris.portmapper.model.Protocol;
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
-import org.kohsuke.args4j.ParserProperties;
 
-import static java.util.Arrays.*;
+import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.ParameterException;
 
+/**
+ * Command-line argument parser. Migrated from args4j (end-of-life 2018) to
+ * picocli 4.7.x. The CLI contract — single-dash option names like
+ * {@code -add}, {@code -list}, {@code -h}/{@code -help}, mutual exclusion
+ * among the mode flags, and the {@code -add}/{@code -delete} required-companions
+ * rule — is preserved verbatim.
+ */
+@Command(
+        name = "portmapper",
+        description = "UPnP PortMapper - manage port mappings on a UPnP router",
+        sortOptions = false,
+        footer = {
+                "",
+                "Example: java -jar PortMapper.jar -add -externalPort 22 -internalPort 22 [-ip <ip-addr>] -description desc"
+        }
+)
 public class CommandLineArguments {
 
-    @Option(name = "-h", aliases = "-help", usage = "Print usage help", help = true)
-    private boolean printHelp;
+    /**
+     * The mutually exclusive mode flags (only one may be supplied). picocli enforces
+     * this at parse time and throws {@link ParameterException} for any combination.
+     */
+    @ArgGroup(exclusive = true)
+    private Mode mode = new Mode();
 
-    @Option(name = "-gui", usage = "Start graphical user interface (default)", forbids = { "-add", "-delete", "-info",
-            "-list" })
-    private boolean startGui;
+    private static final class Mode {
+        @Option(names = { "-h", "-help" }, description = "Print usage help")
+        private boolean printHelp;
 
-    @Option(name = "-add", usage = "Add a new port mapping", depends = { "-internalPort", "-externalPort",
-            "-protocol" }, forbids = { "-gui", "-delete", "-info", "-list" })
-    private boolean addPortMapping;
-    @Option(name = "-delete", usage = "Delete a new port mapping", depends = { "-externalPort",
-            "-protocol" }, forbids = { "-gui", "-add", "-info", "-list" })
-    private boolean deletePortMapping;
-    @Option(name = "-info", usage = "Print router info", forbids = { "-gui", "-delete", "-add", "-list" })
-    private boolean printInfo;
-    @Option(name = "-list", usage = "Print existing port mappings", forbids = { "-gui", "-delete", "-info", "-add" })
-    private boolean listPortMappings;
+        @Option(names = "-gui", description = "Start graphical user interface (default)")
+        private boolean startGui;
 
-    @Option(name = "-ip", usage = "Internal IP of the port mapping (default: localhost)")
+        @Option(names = "-add", description = "Add a new port mapping")
+        private boolean addPortMapping;
+
+        @Option(names = "-delete", description = "Delete a port mapping")
+        private boolean deletePortMapping;
+
+        @Option(names = "-info", description = "Print router info")
+        private boolean printInfo;
+
+        @Option(names = "-list", description = "Print existing port mappings")
+        private boolean listPortMappings;
+    }
+
+    @Option(names = "-ip", description = "Internal IP of the port mapping (default: localhost)")
     private String internalIp;
-    @Option(name = "-internalPort", usage = "Internal port of the port mapping")
-    private int internalPort;
-    @Option(name = "-externalPort", usage = "External port of the port mapping")
-    private int externalPort;
-    @Option(name = "-protocol", usage = "Protocol of the port mapping")
+
+    @Option(names = "-internalPort", description = "Internal port of the port mapping")
+    private Integer internalPort;
+
+    @Option(names = "-externalPort", description = "External port of the port mapping")
+    private Integer externalPort;
+
+    @Option(names = "-protocol", description = "Protocol of the port mapping (TCP or UDP)")
     private Protocol protocol;
-    @Option(name = "-description", usage = "Description of the port mapping")
+
+    @Option(names = "-description", description = "Description of the port mapping")
     private String description;
 
-    @Option(name = "-lib", usage = "UPnP library to use")
+    @Option(names = "-lib", description = "UPnP library to use")
     private String upnpLib;
 
-    @Option(name = "-routerIndex", usage = "Router index if more than one is found (zero-based)")
+    @Option(names = "-routerIndex", description = "Router index if more than one is found (zero-based)")
     private Integer routerIndex;
 
-    private final CmdLineParser parser;
+    private final CommandLine commandLine;
 
     @SuppressWarnings("this-escape")
     public CommandLineArguments() {
-        parser = new CmdLineParser(this, ParserProperties.defaults().withShowDefaults(true).withUsageWidth(80));
+        this.commandLine = new CommandLine(this);
+        this.commandLine.setUsageHelpWidth(80);
     }
 
+    /**
+     * Parse the command-line arguments into this object's fields.
+     *
+     * @param args the command-line arguments.
+     * @return {@code true} on success; {@code false} if parsing failed or a
+     *         dependency constraint was violated. The error message and usage
+     *         banner are printed to {@code System.err} in the false case.
+     */
     public boolean parse(final String[] args) {
         try {
-            parser.parseArgument(asList(args));
-            return true;
-        } catch (final CmdLineException e) {
+            commandLine.parseArgs(args);
+            return validateConstraints();
+        } catch (final ParameterException e) {
             System.err.println(e.getMessage());
             printHelp();
             return false;
         }
     }
 
+    /**
+     * Apply the cross-option dependency rules that args4j's {@code depends}
+     * attribute used to enforce declaratively. picocli has no direct equivalent;
+     * post-parse validation is the documented idiom.
+     *
+     * @return {@code true} if all dependencies are satisfied.
+     */
+    private boolean validateConstraints() {
+        if (isAddPortMapping() && (internalPort == null || externalPort == null || protocol == null)) {
+            System.err.println("Error: -add requires -internalPort, -externalPort and -protocol");
+            printHelp();
+            return false;
+        }
+        if (isDeletePortMapping() && (externalPort == null || protocol == null)) {
+            System.err.println("Error: -delete requires -externalPort and -protocol");
+            printHelp();
+            return false;
+        }
+        return true;
+    }
+
     public void printHelp() {
-        parser.printUsage(System.err);
-        System.err.println(
-                " Example: java -jar PortMapper.jar -add -externalPort 22 -internalPort 22 [-ip <ip-addr>] -description desc");
+        commandLine.usage(System.err);
     }
 
     public boolean isPrintHelp() {
-        return printHelp;
+        return mode != null && mode.printHelp;
     }
 
     public boolean isStartGui() {
-        return startGui;
+        return mode != null && mode.startGui;
     }
 
     public boolean isAddPortMapping() {
-        return addPortMapping;
+        return mode != null && mode.addPortMapping;
     }
 
     public boolean isDeletePortMapping() {
-        return deletePortMapping;
+        return mode != null && mode.deletePortMapping;
     }
 
     public boolean isPrintInfo() {
-        return printInfo;
+        return mode != null && mode.printInfo;
     }
 
     public boolean isListPortMappings() {
-        return listPortMappings;
+        return mode != null && mode.listPortMappings;
     }
 
     public String getInternalIp() {
@@ -115,11 +172,11 @@ public class CommandLineArguments {
     }
 
     public int getInternalPort() {
-        return internalPort;
+        return internalPort == null ? 0 : internalPort;
     }
 
     public int getExternalPort() {
-        return externalPort;
+        return externalPort == null ? 0 : externalPort;
     }
 
     public Protocol getProtocol() {
