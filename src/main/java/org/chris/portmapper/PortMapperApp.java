@@ -39,7 +39,6 @@ import org.chris.portmapper.model.PortMappingPreset;
 import org.chris.portmapper.router.AbstractRouterFactory;
 import org.chris.portmapper.router.IRouter;
 import org.chris.portmapper.router.RouterException;
-import org.jdesktop.application.ResourceMap;
 import org.jdesktop.application.SingleFrameApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -189,10 +188,6 @@ public class PortMapperApp extends SingleFrameApplication {
         }
     }
 
-    public ResourceMap getResourceMap() {
-        return getContext().getResourceMap();
-    }
-
     public PortMapperView getView() {
         return (PortMapperView) getMainView();
     }
@@ -230,10 +225,9 @@ public class PortMapperApp extends SingleFrameApplication {
         // More than one router found: ask user.
         logger.info("Found more than one router (count: {}): ask user.", foundRouters.size());
 
-        final ResourceMap resourceMap = getResourceMap();
         final IRouter selectedRouter = (IRouter) JOptionPane.showInputDialog(this.getView().getFrame(),
-                resourceMap.getString("messages.select_router.message"),
-                resourceMap.getString("messages.select_router.title"), JOptionPane.QUESTION_MESSAGE, null,
+                Messages.get("messages.select_router.message"),
+                Messages.get("messages.select_router.title"), JOptionPane.QUESTION_MESSAGE, null,
                 foundRouters.toArray(), null);
 
         if (selectedRouter == null) {

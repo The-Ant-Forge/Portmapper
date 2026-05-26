@@ -41,6 +41,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.Border;
 
+import org.chris.portmapper.Messages;
 import org.chris.portmapper.PortMapperApp;
 import org.chris.portmapper.model.PortMapping;
 import org.chris.portmapper.model.PortMappingPreset;
@@ -115,17 +116,17 @@ public class PortMapperView extends FrameView {
         final ActionMap actionMap = this.getContext().getActionMap(this.getClass(), this);
         final JPanel routerPanel = new JPanel(new MigLayout("", "[fill, grow][]", ""));
         routerPanel
-                .setBorder(BorderFactory.createTitledBorder(app.getResourceMap().getString("mainFrame.router.title")));
+                .setBorder(BorderFactory.createTitledBorder(Messages.get("mainFrame.router.title")));
 
-        routerPanel.add(new JLabel(app.getResourceMap().getString("mainFrame.router.external_address")), "align label"); //$NON-NLS-2$
-        externalIPLabel = new JLabel(app.getResourceMap().getString(MAIN_FRAME_ROUTER_NOT_CONNECTED));
+        routerPanel.add(new JLabel(Messages.get("mainFrame.router.external_address")), "align label"); //$NON-NLS-2$
+        externalIPLabel = new JLabel(Messages.get(MAIN_FRAME_ROUTER_NOT_CONNECTED));
         routerPanel.add(externalIPLabel, "width 130!");
         routerPanel.add(new JButton(actionMap.get(ACTION_COPY_EXTERNAL_ADDRESS)), "sizegroup router");
         routerPanel.add(new JButton(actionMap.get(ACTION_UPDATE_ADDRESSES)),
                 "wrap, spany 2, aligny base, sizegroup router");
 
-        routerPanel.add(new JLabel(app.getResourceMap().getString("mainFrame.router.internal_address")), "align label");
-        internalIPLabel = new JLabel(app.getResourceMap().getString(MAIN_FRAME_ROUTER_NOT_CONNECTED));
+        routerPanel.add(new JLabel(Messages.get("mainFrame.router.internal_address")), "align label");
+        internalIPLabel = new JLabel(Messages.get(MAIN_FRAME_ROUTER_NOT_CONNECTED));
         routerPanel.add(internalIPLabel, "width 130!");
         routerPanel.add(new JButton(actionMap.get(ACTION_COPY_INTERNAL_ADDRESS)), "wrap, sizegroup router");
 
@@ -161,7 +162,7 @@ public class PortMapperView extends FrameView {
 
         final JPanel logPanel = new JPanel(new MigLayout("", "[grow, fill]", "[grow, fill]"));
         logPanel.setBorder(
-                BorderFactory.createTitledBorder(app.getResourceMap().getString("mainFrame.log_messages.title")));
+                BorderFactory.createTitledBorder(Messages.get("mainFrame.log_messages.title")));
         logPanel.add(scrollPane, "height 100::");
 
         return logPanel;
@@ -172,7 +173,7 @@ public class PortMapperView extends FrameView {
 
         final JPanel presetPanel = new JPanel(new MigLayout("", "[grow, fill][]", ""));
         presetPanel.setBorder(BorderFactory
-                .createTitledBorder(app.getResourceMap().getString("mainFrame.port_mapping_presets.title")));
+                .createTitledBorder(Messages.get("mainFrame.port_mapping_presets.title")));
 
         portMappingPresets = new JList<>(new PresetListModel(app.getSettings()));
         portMappingPresets.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -198,7 +199,7 @@ public class PortMapperView extends FrameView {
 
         final ActionMap actionMap = this.getContext().getActionMap(this.getClass(), this);
 
-        tableModel = new PortMappingsTableModel(app);
+        tableModel = new PortMappingsTableModel();
         mappingsTable = new JTable(tableModel);
         mappingsTable.setAutoCreateRowSorter(true);
         mappingsTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -212,7 +213,7 @@ public class PortMapperView extends FrameView {
         final JPanel mappingsPanel = new JPanel(new MigLayout("", "[fill,grow]", "[grow,fill][]"));
         mappingsPanel.setName("port_mappings");
         final Border panelBorder = BorderFactory
-                .createTitledBorder(app.getResourceMap().getString("mainFrame.port_mappings.title"));
+                .createTitledBorder(Messages.get("mainFrame.port_mappings.title"));
         mappingsPanel.setBorder(panelBorder);
         mappingsPanel.add(mappingsTabelPane, "height 100::, span 2, wrap");
 
@@ -225,12 +226,12 @@ public class PortMapperView extends FrameView {
     public void updateAddresses() {
         final IRouter router = app.getRouter();
         if (router == null) {
-            externalIPLabel.setText(app.getResourceMap().getString(MAIN_FRAME_ROUTER_NOT_CONNECTED));
-            internalIPLabel.setText(app.getResourceMap().getString(MAIN_FRAME_ROUTER_NOT_CONNECTED));
+            externalIPLabel.setText(Messages.get(MAIN_FRAME_ROUTER_NOT_CONNECTED));
+            internalIPLabel.setText(Messages.get(MAIN_FRAME_ROUTER_NOT_CONNECTED));
             return;
         }
-        externalIPLabel.setText(app.getResourceMap().getString("mainFrame.router.updating"));
-        internalIPLabel.setText(app.getResourceMap().getString("mainFrame.router.updating"));
+        externalIPLabel.setText(Messages.get("mainFrame.router.updating"));
+        internalIPLabel.setText(Messages.get("mainFrame.router.updating"));
         internalIPLabel.setText(router.getInternalHostName());
         try {
             externalIPLabel.setText(router.getExternalIPAddress());
@@ -340,8 +341,8 @@ public class PortMapperView extends FrameView {
             final String localHostAddress = app.getLocalHostAddress();
             if (selectedItem.useLocalhostAsInternalClient() && localHostAddress == null) {
                 JOptionPane.showMessageDialog(this.getFrame(),
-                        app.getResourceMap().getString("messages.error_getting_localhost_address"),
-                        app.getResourceMap().getString("messages.error"), JOptionPane.ERROR_MESSAGE);
+                        Messages.get("messages.error_getting_localhost_address"),
+                        Messages.get("messages.error"), JOptionPane.ERROR_MESSAGE);
             } else {
                 addMapping(selectedItem.getPortMappings(localHostAddress));
             }

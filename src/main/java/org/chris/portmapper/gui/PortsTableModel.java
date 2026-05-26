@@ -26,7 +26,7 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
-import org.chris.portmapper.PortMapperApp;
+import org.chris.portmapper.Messages;
 import org.chris.portmapper.model.Protocol;
 import org.chris.portmapper.model.SinglePortMapping;
 
@@ -36,12 +36,10 @@ import org.chris.portmapper.model.SinglePortMapping;
 public class PortsTableModel extends AbstractTableModel implements PropertyChangeListener {
 
     private static final long serialVersionUID = 1L;
-    @SuppressWarnings("serial")
+    @SuppressWarnings("serial") // List interface is not Serializable; suppress the type-based warning
     private final List<SinglePortMapping> ports;
-    private final transient PortMapperApp app;
 
-    public PortsTableModel(final PortMapperApp app, final List<SinglePortMapping> ports) {
-        this.app = app;
+    public PortsTableModel(final List<SinglePortMapping> ports) {
         this.ports = ports;
     }
 
@@ -90,11 +88,11 @@ public class PortsTableModel extends AbstractTableModel implements PropertyChang
     public String getColumnName(final int column) {
         switch (column) {
         case 0:
-            return app.getResourceMap().getString("preset_dialog.ports.protocol");
+            return Messages.get("preset_dialog.ports.protocol");
         case 1:
-            return app.getResourceMap().getString("preset_dialog.ports.external");
+            return Messages.get("preset_dialog.ports.external");
         case 2:
-            return app.getResourceMap().getString("preset_dialog.ports.internal");
+            return Messages.get("preset_dialog.ports.internal");
         default:
             throw new IllegalArgumentException("Column " + column //$NON-NLS-1$
                     + " does not exist"); //$NON-NLS-1$

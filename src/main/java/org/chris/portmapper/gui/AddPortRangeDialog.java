@@ -37,7 +37,7 @@ import javax.swing.WindowConstants;
 import org.chris.portmapper.PortMapperApp;
 import org.chris.portmapper.model.Protocol;
 import org.jdesktop.application.Action;
-import org.jdesktop.application.ResourceMap;
+import org.chris.portmapper.Messages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -250,8 +250,7 @@ public class AddPortRangeDialog extends JDialog {
     }
 
     private void showErrorMessage(final String titleKey, final String messageKey) {
-        final ResourceMap resourceMap = app.getResourceMap();
-        JOptionPane.showMessageDialog(this, resourceMap.getString(messageKey), resourceMap.getString(titleKey),
+        JOptionPane.showMessageDialog(this, Messages.get(messageKey), Messages.get(titleKey),
                 JOptionPane.ERROR_MESSAGE);
     }
 

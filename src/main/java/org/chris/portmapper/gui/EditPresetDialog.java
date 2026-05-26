@@ -50,7 +50,7 @@ import org.chris.portmapper.model.PortMappingPreset;
 import org.chris.portmapper.model.Protocol;
 import org.chris.portmapper.model.SinglePortMapping;
 import org.jdesktop.application.Action;
-import org.jdesktop.application.ResourceMap;
+import org.chris.portmapper.Messages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -213,9 +213,9 @@ public class EditPresetDialog extends JDialog {
 
         final JPanel portsPanel = new JPanel(new MigLayout("", "", ""));
         portsPanel.setBorder(
-                BorderFactory.createTitledBorder(app.getResourceMap().getString("preset_dialog.ports.title")));
+                BorderFactory.createTitledBorder(Messages.get("preset_dialog.ports.title")));
 
-        tableModel = new PortsTableModel(app, ports);
+        tableModel = new PortsTableModel(ports);
         portsTable = new JTable(tableModel);
         portsTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         portsTable.getSelectionModel()
@@ -338,8 +338,7 @@ public class EditPresetDialog extends JDialog {
     }
 
     private void showErrorMessage(final String titleKey, final String messageKey) {
-        final ResourceMap resourceMap = app.getResourceMap();
-        JOptionPane.showMessageDialog(this, resourceMap.getString(messageKey), resourceMap.getString(titleKey),
+        JOptionPane.showMessageDialog(this, Messages.get(messageKey), Messages.get(titleKey),
                 JOptionPane.ERROR_MESSAGE);
     }
 }
