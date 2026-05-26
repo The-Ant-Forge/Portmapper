@@ -77,8 +77,23 @@ public class Settings implements Serializable {
                 new ArrayList<>(this.presets));
     }
 
-    public void savePreset() {
-        this.propertyChangeSupport.firePropertyChange(PROPERTY_PORT_MAPPING_PRESETS, null,
+    /**
+     * Replace an existing preset (matched by object identity / equals) with
+     * a new value. Used by {@code EditPresetDialog} to commit edits — since
+     * {@link PortMappingPreset} is now a record (immutable), "saving" an
+     * edited preset means swapping the old instance for a freshly-built one.
+     *
+     * @param oldPreset the preset currently in the list to be replaced.
+     * @param newPreset the replacement preset.
+     */
+    public void replacePreset(final PortMappingPreset oldPreset, final PortMappingPreset newPreset) {
+        final int index = this.presets.indexOf(oldPreset);
+        if (index < 0) {
+            return;
+        }
+        final List<PortMappingPreset> oldPresets = new ArrayList<>(this.presets);
+        this.presets.set(index, newPreset);
+        this.propertyChangeSupport.firePropertyChange(PROPERTY_PORT_MAPPING_PRESETS, oldPresets,
                 new ArrayList<>(this.presets));
     }
 

@@ -57,9 +57,9 @@ public class PortsTableModel extends AbstractTableModel implements PropertyChang
     public Object getValueAt(final int rowIndex, final int columnIndex) {
         final SinglePortMapping port = ports.get(rowIndex);
         return switch (columnIndex) {
-            case 0 -> port.getProtocol();
-            case 1 -> port.getExternalPort();
-            case 2 -> port.getInternalPort();
+            case 0 -> port.protocol();
+            case 1 -> port.externalPort();
+            case 2 -> port.internalPort();
             default -> throw new IllegalArgumentException("Column " + columnIndex + " does not exist");
         };
     }
@@ -91,12 +91,15 @@ public class PortsTableModel extends AbstractTableModel implements PropertyChang
     @Override
     public void setValueAt(final Object value, final int rowIndex, final int columnIndex) {
         final SinglePortMapping port = ports.get(rowIndex);
-        switch (columnIndex) {
-            case 0 -> port.setProtocol((Protocol) value);
-            case 1 -> port.setExternalPort((Integer) value);
-            case 2 -> port.setInternalPort((Integer) value);
+        // SinglePortMapping is an immutable record; build a new value with the edited field replaced.
+        final SinglePortMapping updated = switch (columnIndex) {
+            case 0 -> new SinglePortMapping((Protocol) value, port.internalPort(), port.externalPort());
+            case 1 -> new SinglePortMapping(port.protocol(), port.internalPort(), (Integer) value);
+            case 2 -> new SinglePortMapping(port.protocol(), (Integer) value, port.externalPort());
             default -> throw new IllegalArgumentException("Column " + columnIndex + " does not exist");
-        }
+        };
+        ports.set(rowIndex, updated);
+        fireTableCellUpdated(rowIndex, columnIndex);
     }
 
     @Override

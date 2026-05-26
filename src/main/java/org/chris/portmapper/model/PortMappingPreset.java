@@ -22,64 +22,34 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.chris.portmapper.Settings;
-
 /**
- * This class stores a port mapping preset containing a description, internal and remote host and a {@link List} of
- * {@link SinglePortMapping}s.
+ * A named, persisted preset describing a set of port mappings that the user
+ * can apply against the currently-connected router in one click. Persisted to
+ * {@code settings.xml} via {@code XMLEncoder} using the record's canonical
+ * constructor.
+ *
+ * <p>The previous {@code isNew} flag and {@code save(Settings)} method are gone
+ * in the records refactor — those were UI/lifecycle concerns, not data, and now
+ * live in {@code EditPresetDialog} which decides "add or replace" against the
+ * settings list.
+ *
+ * @param description user-facing description / label.
+ * @param internalClient internal LAN IP, or {@code null} to use the current
+ *                       localhost address.
+ * @param remoteHost remote host the mappings apply to, or {@code null} for any.
+ * @param ports the list of single port mappings in this preset.
  */
-public class PortMappingPreset implements Serializable {
+public record PortMappingPreset(
+        String description,
+        String internalClient,
+        String remoteHost,
+        @SuppressWarnings("serial") List<SinglePortMapping> ports) implements Serializable {
 
     private static final long serialVersionUID = 3749136884938395765L;
 
-    /**
-     * The description of this preset.
-     */
-    private String description;
-
-    /**
-     * The ip address of the internal client or <code>null</code> for localhost.
-     */
-    private String internalClient;
-
-    /**
-     * The host name of the remote host.
-     */
-    private String remoteHost;
-
-    /**
-     * The port mappings in this preset.
-     */
-    @SuppressWarnings("serial")
-    private List<SinglePortMapping> ports;
-
-    /**
-     * <code>true</code> if this preset has not been saved.
-     */
-    private boolean isNew;
-
-    /**
-     * Creates a new preset with the given default values.
-     * 
-     * @param remoteHost the remote host name.
-     * @param internalClient the IP address of the internal host.
-     * @param description the description of the port mapping.
-     */
-    public PortMappingPreset(final String remoteHost, final String internalClient, final String description) {
-        this.remoteHost = remoteHost;
-        this.internalClient = internalClient;
-        this.description = description;
-        this.ports = new LinkedList<>();
-
-        this.isNew = false;
-    }
-
-    /**
-     * Creates a new empty preset.
-     */
-    public PortMappingPreset() {
-        this.ports = new LinkedList<>();
-        this.isNew = true;
+    /** Build an empty preset (used as the seed for "Create new preset" in the GUI). */
+    public static PortMappingPreset empty() {
+        return new PortMappingPreset(null, null, null, new LinkedList<>());
     }
 
     @Override
@@ -87,92 +57,53 @@ public class PortMappingPreset implements Serializable {
         return description;
     }
 
+    /**
+     * Expand this preset into a list of concrete {@link PortMapping} instances
+     * for the currently-connected router.
+     *
+     * @param localhost the local host address; required if this preset uses
+     *                  the localhost-as-internal-client mode.
+     * @return one {@code PortMapping} per port in this preset.
+     * @throws IllegalArgumentException if the preset wants localhost and the
+     *         caller didn't supply one.
+     */
     public List<PortMapping> getPortMappings(final String localhost) {
-        if (this.useLocalhostAsInternalClient() && (localhost == null || localhost.length() == 0)) {
+        if (useLocalhostAsInternalClient() && (localhost == null || localhost.length() == 0)) {
             throw new IllegalArgumentException("Got invalid localhost and internal host is not given.");
         }
 
         final List<PortMapping> allPortMappings = new ArrayList<>(this.ports.size());
         for (final SinglePortMapping port : this.ports) {
-            final String internalClientName = this.useLocalhostAsInternalClient() ? localhost : this.internalClient;
-
-            final PortMapping newMapping = new PortMapping(port.getProtocol(), remoteHost, port.getExternalPort(),
-                    internalClientName, port.getInternalPort(), description);
-
-            allPortMappings.add(newMapping);
+            final String internalClientName = useLocalhostAsInternalClient() ? localhost : this.internalClient;
+            allPortMappings.add(new PortMapping(port.protocol(), remoteHost, port.externalPort(),
+                    internalClientName, port.internalPort(), description));
         }
-
         return allPortMappings;
     }
 
+    /**
+     * @return a verbose human-readable rendering of this preset.
+     */
     public String getCompleteDescription() {
         final StringBuilder b = new StringBuilder();
-
         b.append(" ");
         b.append(remoteHost);
         b.append(":");
-
         b.append(" -> ");
         b.append(internalClient);
         b.append(":");
-
         b.append(" ");
-
         b.append(" ");
         b.append(description);
         return b.toString();
     }
 
-    public List<SinglePortMapping> getPorts() {
-        return ports;
-    }
-
-    public void setPorts(final List<SinglePortMapping> ports) {
-        this.ports = ports;
-    }
-
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setRemoteHost(final String remoteHost) {
-        this.remoteHost = remoteHost;
-    }
-
-    public String getRemoteHost() {
-        return remoteHost;
-    }
-
-    public void setInternalClient(final String internalClient) {
-        this.internalClient = internalClient;
-    }
-
-    public String getInternalClient() {
-        return internalClient;
-    }
-
-    public boolean isNew() {
-        return isNew;
-    }
-
-    public void setNew(final boolean isNew) {
-        this.isNew = isNew;
-    }
-
+    /**
+     * @return {@code true} when the preset wants the current localhost address
+     *         resolved at apply time, rather than the preset's stored
+     *         {@code internalClient}.
+     */
     public boolean useLocalhostAsInternalClient() {
-        return this.getInternalClient() == null || this.getInternalClient().length() == 0;
-    }
-
-    public void save(final Settings settings) {
-        if (this.isNew) {
-            settings.addPreset(this);
-        } else {
-            settings.savePreset();
-        }
-        this.isNew = false;
+        return internalClient == null || internalClient.length() == 0;
     }
 }

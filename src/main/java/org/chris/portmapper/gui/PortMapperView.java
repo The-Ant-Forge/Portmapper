@@ -385,7 +385,7 @@ public class PortMapperView {
     }
 
     public void createPresetMapping() {
-        app.show(new EditPresetDialog(app, new PortMappingPreset()));
+        app.show(new EditPresetDialog(app));
     }
 
     public void editPresetMapping() {

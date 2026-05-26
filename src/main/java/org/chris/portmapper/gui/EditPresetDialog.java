@@ -89,21 +89,30 @@ public class EditPresetDialog extends JDialog {
     private JCheckBox useLocalhostCheckBox;
     private JTable portsTable;
 
-    private final transient PortMappingPreset editedPreset;
+    /** The preset being edited, or {@code null} when creating a new one. */
+    private final transient PortMappingPreset originalPreset;
     private final transient PortMapperApp app;
 
     private PortsTableModel tableModel;
 
+    /** Open the dialog to create a brand-new preset. */
+    public EditPresetDialog(final PortMapperApp app) {
+        this(app, null);
+    }
+
+    /** Open the dialog to edit an existing preset (which will be replaced in settings on save). */
     @SuppressWarnings("this-escape")
     public EditPresetDialog(final PortMapperApp app, final PortMappingPreset portMappingPreset) {
         super(app.getMainFrame(), true);
         this.app = app;
-        this.editedPreset = portMappingPreset;
+        this.originalPreset = portMappingPreset;
         this.ports = new LinkedList<>();
         this.setName(DIALOG_NAME);
         this.setTitle(Messages.get(DIALOG_NAME + ".title"));
         initComponents();
-        copyValuesFromPreset();
+        if (originalPreset != null) {
+            copyValuesFromPreset();
+        }
         this.propertyChangeSupport = new PropertyChangeSupport(ports);
         propertyChangeSupport.addPropertyChangeListener(PROPERTY_PORTS, tableModel);
 
@@ -116,14 +125,14 @@ public class EditPresetDialog extends JDialog {
     }
 
     private void copyValuesFromPreset() {
-        remoteHostTextField.setText(editedPreset.getRemoteHost());
-        presetNameTextField.setText(editedPreset.getDescription());
+        remoteHostTextField.setText(originalPreset.remoteHost());
+        presetNameTextField.setText(originalPreset.description());
 
-        for (final SinglePortMapping port : editedPreset.getPorts()) {
-            this.ports.add(port.copy());
-        }
+        // Records are immutable, so the previous defensive copy() is now a no-op return-self.
+        // Copying the list is still required: dialog edits must not mutate the persisted preset's list.
+        ports.addAll(originalPreset.ports());
 
-        final boolean useLocalhost = (editedPreset.getInternalClient() == null);
+        final boolean useLocalhost = (originalPreset.internalClient() == null);
 
         final String localhostAddress = app.getLocalHostAddress();
 
@@ -134,18 +143,18 @@ public class EditPresetDialog extends JDialog {
             useLocalhostCheckBox.setSelected(useLocalhost);
             internalClientTextField.setEnabled(!useLocalhost);
 
-            internalClientTextField.setText(useLocalhost ? localhostAddress : editedPreset.getInternalClient());
+            internalClientTextField.setText(useLocalhost ? localhostAddress : originalPreset.internalClient());
         }
     }
 
     private static JLabel createLabel(final String name) {
-        final JLabel newLabel = new JLabel(Messages.get(name + ".text"));
+        final var newLabel = new JLabel(Messages.get(name + ".text"));
         newLabel.setName(name);
         return newLabel;
     }
 
     private void initComponents() {
-        final JPanel dialogPane = new JPanel(new MigLayout("", // Layout
+        final var dialogPane = new JPanel(new MigLayout("", // Layout
                 // Constraints
                 "[right]rel[left,grow 100]", // Column Constraints
                 "")); // Row Constraints
@@ -197,7 +206,7 @@ public class EditPresetDialog extends JDialog {
         dialogPane.add(getPortsPanel(), "span 3, grow, wrap");
 
         dialogPane.add(new JButton(Actions.create(ACTION_CANCEL, e -> cancel())), "tag cancel, span 2");
-        final JButton okButton = new JButton(Actions.create(ACTION_SAVE, e -> save()));
+        final var okButton = new JButton(Actions.create(ACTION_SAVE, e -> save()));
         dialogPane.add(okButton, "tag ok, wrap");
 
         setContentPane(dialogPane);
@@ -208,7 +217,7 @@ public class EditPresetDialog extends JDialog {
     }
 
     private Component getPortsPanel() {
-        final JPanel portsPanel = new JPanel(new MigLayout("", "", ""));
+        final var portsPanel = new JPanel(new MigLayout("", "", ""));
         portsPanel.setBorder(
                 BorderFactory.createTitledBorder(Messages.get("preset_dialog.ports.title")));
 
@@ -283,6 +292,8 @@ public class EditPresetDialog extends JDialog {
 
     /**
      * This method is executed when the user clicks the save button. The method saves the entered preset
+     * by building a fresh {@link PortMappingPreset} record and asking {@link Settings} to add (new) or
+     * replace (edit) it.
      */
     public void save() {
 
@@ -295,9 +306,10 @@ public class EditPresetDialog extends JDialog {
         }
 
         // Check, if a preset with the same name already exists.
+        // Identity (not equals) is the right check here: skip the very instance we're editing.
         final Settings settings = app.getSettings();
         for (final PortMappingPreset preset : settings.getPresets()) {
-            if (preset != editedPreset && preset.getDescription() != null && preset.getDescription().equals(name)) {
+            if (preset != originalPreset && preset.description() != null && preset.description().equals(name)) {
                 showErrorMessage(PRESET_DIALOG_ERROR_TITLE, "preset_dialog.error.duplicate_name");
                 return;
             }
@@ -309,18 +321,17 @@ public class EditPresetDialog extends JDialog {
             return;
         }
 
-        if (useLocalhostCheckBox.isSelected()) {
-            editedPreset.setInternalClient(null);
+        final String internalClient = useLocalhostCheckBox.isSelected() ? null : internalClientTextField.getText();
+        final PortMappingPreset newPreset = new PortMappingPreset(
+                name, internalClient, remoteHostTextField.getText(), new LinkedList<>(this.ports));
+
+        if (originalPreset == null) {
+            settings.addPreset(newPreset);
         } else {
-            editedPreset.setInternalClient(internalClientTextField.getText());
+            settings.replacePreset(originalPreset, newPreset);
         }
-        editedPreset.setRemoteHost(remoteHostTextField.getText());
-        editedPreset.setDescription(name);
-        editedPreset.setPorts(this.ports);
 
-        editedPreset.save(settings);
-
-        LOG.info("Saved preset '{}'.", editedPreset);
+        LOG.info("Saved preset '{}'.", newPreset);
 
         this.dispose();
     }

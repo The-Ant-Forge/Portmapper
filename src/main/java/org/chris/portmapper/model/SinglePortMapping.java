@@ -15,59 +15,36 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/**
- *
- */
 package org.chris.portmapper.model;
 
 import java.io.Serializable;
 
 /**
- * This class is used by {@link PortMapping} to store the information about a single port mapping, i.e. the protocol
- * (TCP or UDP) and internal and extern port.
+ * A single port mapping entry inside a {@link PortMappingPreset}: protocol
+ * (TCP/UDP) plus an internal and external port. Persisted to {@code settings.xml}
+ * via {@code XMLEncoder} using the record's canonical constructor.
+ *
+ * @param protocol the network protocol of this mapping.
+ * @param internalPort the internal port.
+ * @param externalPort the external port.
  */
-public class SinglePortMapping implements Serializable {
+public record SinglePortMapping(Protocol protocol, int internalPort, int externalPort) implements Serializable {
 
     private static final long serialVersionUID = 7458514232916039775L;
-    private int externalPort;
-    private int internalPort;
-    private Protocol protocol;
 
-    public SinglePortMapping() {
-        this(Protocol.TCP, 1, 1);
+    /** Default placeholder mapping used when a fresh row is added in the GUI. */
+    public static SinglePortMapping defaults() {
+        return new SinglePortMapping(Protocol.TCP, 1, 1);
     }
 
-    public SinglePortMapping(final Protocol protocol, final int internalPort, final int externalPort) {
-        this.protocol = protocol;
-        this.internalPort = internalPort;
-        this.externalPort = externalPort;
-    }
-
-    public int getExternalPort() {
-        return externalPort;
-    }
-
-    public void setExternalPort(final int externalPort) {
-        this.externalPort = externalPort;
-    }
-
-    public Protocol getProtocol() {
-        return protocol;
-    }
-
-    public void setProtocol(final Protocol protocol) {
-        this.protocol = protocol;
-    }
-
-    public int getInternalPort() {
-        return internalPort;
-    }
-
-    public void setInternalPort(final int internalPort) {
-        this.internalPort = internalPort;
-    }
-
+    /**
+     * Defensive {@code copy()} that historically returned a new mutable instance.
+     * Records are immutable so this is a no-op return-self; kept as a stable API
+     * affordance so call sites that asked for a copy don't need to change.
+     *
+     * @return this record (records are immutable, no copy needed).
+     */
     public SinglePortMapping copy() {
-        return new SinglePortMapping(protocol, internalPort, externalPort);
+        return this;
     }
 }

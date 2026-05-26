@@ -206,9 +206,8 @@ public class SBBIRouter extends AbstractRouter {
     @Override
     public void removePortMapping(final Protocol protocol, final String remoteHost, final int externalPort)
             throws RouterException {
-        final String protocolString = (protocol.equals(Protocol.TCP) ? "TCP" : "UDP");
         try {
-            router.deletePortMapping(remoteHost, externalPort, protocolString);
+            router.deletePortMapping(remoteHost, externalPort, protocol.getName());
         } catch (final IOException | UPNPResponseException e) {
             throw new RouterException("Could not remove port mapping", e);
         }
