@@ -36,12 +36,16 @@ Full plan: [bsaf-plan.md](bsaf-plan.md). Seven steps total.
 
 ## Backlog
 
-- **Evaluate <https://github.com/offbynull/portmapper>** as another UPnP backend candidate. User-requested.
-- **args4j replacement.** `args4j:2.37` is end-of-life (last release 2018). Modern alternatives: **picocli** (preferred for subcommand support, colored help, completion scripts) or jcommander. Self-contained change; would touch `CommandLineArguments.java` only. Tests in `TestCommandLineArguments` provide a safety net for the swap.
 - **Modern Java idioms.** Records for `PortMapping`/`Protocol`/`SinglePortMapping`/`PortMappingPreset`, pattern matching where useful, judicious `var`, sealed interface for `IRouter` if it adds clarity. Sequence this **before** the code review so the review evaluates the modern shape rather than flagging legacy idioms that are about to disappear.
 - **Code review pass.** Use [code-review.md](code-review.md) as the checklist. Produces a dated `Code-Review-YYMMDD.md` deliverable.
+- **README polish: regenerate the `-h` help block** with picocli's actual output (commit `c131d28` changed the CLI help format). Low priority — flags listed still all work, only the literal rendering differs.
 - **Re-enable GitHub Actions** when the codebase stabilizes (currently disabled at repo level; re-enable via Settings → Actions → "Allow all actions" or `gh api -X PUT repos/The-Ant-Forge/Portmapper/actions/permissions -F enabled=true`).
 - **`Settings` migration shim removal.** The one-line shim in `Settings.getRouterFactoryClassName()` that rewrites the pre-rename Cling FQCN can be deleted once the maintainer's `settings.xml` has been rewritten (one launch cycle).
+
+## Backlog — completed and decided
+
+- ✅ **args4j → picocli** (commit `c131d28`). `args4j:2.37` retired (end-of-life since 2018); replaced with `info.picocli:picocli:4.7.7`. CLI contract preserved; `TestCommandLineArguments` (17 tests) passes unchanged.
+- ❌ **offbynull/portmapper as additional UPnP backend** — investigated, **skipped**. Library (`com.offbynull.portmapper:portmapper:2.0.6`) is Apache-2.0 and on Maven Central but is functionally abandoned (last commit Jan 2023) and the deal-breaker is its API shape: the `PortMapper` interface only exposes 4 mapping primitives (`mapPort` / `unmapPort` / `refreshPort` / `getSourceAddress`) with **no `listExistingMappings()`** and **no router-level `getExternalIpAddress()`** — both required by our `IRouter` SPI for the GUI's mappings table and External Address display. Adopting would require either degrading the GUI or reimplementing the queries beneath offbynull, defeating the point. Revisit only if a future *mapping-only headless* mode is wanted (no GUI), where the narrow API would be a fit.
 
 ## Wave 1 — done (reference)
 
