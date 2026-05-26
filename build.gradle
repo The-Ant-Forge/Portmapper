@@ -72,7 +72,6 @@ dependencies {
     implementation 'org.slf4j:jul-to-slf4j:2.0.18'
     implementation 'ch.qos.logback:logback-classic:1.5.32'
     implementation 'com.miglayout:miglayout-swing:11.4.3'
-    implementation 'org.jdesktop.bsaf:bsaf:1.9.2'
     implementation ':sbbi-upnplib:1.0.4'
     implementation 'org.jupnp:org.jupnp.support:3.0.4'
     implementation 'org.bitlet:weupnp:0.1.4'
