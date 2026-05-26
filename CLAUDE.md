@@ -62,12 +62,14 @@ PortMapperStarter.main
 
 | Package | Factory class | Purpose |
 |---------|---------------|---------|
-| `cling/` | `ClingRouterFactory` | **Default**. Uses 4thline Cling. Single-router only. |
-| `weupnp/` | `WeUPnPRouterFactory` | Supports `-Dportmapper.locationUrl=...` for manual router URL. |
-| `sbbi/` | `SBBIRouterFactory` | Legacy SBBI UPnP library. |
+| `jupnp/` | `JUPnPRouterFactory` | **Default**. Uses jUPnP (active fork of the abandoned 4thline Cling). Single-router only. |
+| `weupnp/` | `WeUPnPRouterFactory` | Supports `-Dportmapper.locationUrl=...` for manual router URL. Currently the only backend known to work against the maintainer's specific router. |
+| `sbbi/` | `SBBIRouterFactory` | Legacy SBBI UPnP library (2008-vintage vendored jar). |
 | `dummy/` | `DummyRouterFactory` | Testing only; do not ship as default. |
 
 Factories are resolved by **fully-qualified class name string** via reflection — not `ServiceLoader`. The class name comes from either the `-lib` CLI flag or `Settings.getRouterFactoryClassName()`. The constructor contract is `public RouterFactory(PortMapperApp app)`. To add a new UPnP library: subclass `AbstractRouterFactory`, implement `findRoutersInternal()` and `connect(locationUrl)`, expose the `(PortMapperApp)` constructor, and register it in the Settings dialog dropdown.
+
+`Settings.getRouterFactoryClassName()` carries a one-line migration shim that rewrites the pre-rename FQCN (`org.chris.portmapper.router.cling.ClingRouterFactory`) to the new jUPnP one on read, so legacy `settings.xml` files self-heal.
 
 ### GUI framework
 

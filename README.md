@@ -83,12 +83,12 @@ java -jar portmapper-<version>-all.jar -h
 
 PortMapper ships three third-party UPnP libraries. If the default doesn't work for your device, try a different one:
 
-- [Cling](https://github.com/4thline/cling): `org.chris.portmapper.router.cling.ClingRouterFactory` (default)
+- [jUPnP](https://github.com/jupnp/jupnp): `org.chris.portmapper.router.jupnp.JUPnPRouterFactory` (default; active fork of the abandoned Cling library)
 - [weupnp](https://github.com/bitletorg/weupnp): `org.chris.portmapper.router.weupnp.WeUPnPRouterFactory`
 - [SBBI UPnP lib](https://sourceforge.net/projects/upnplibmobile/): `org.chris.portmapper.router.sbbi.SBBIRouterFactory`
 - `org.chris.portmapper.router.dummy.DummyRouterFactory` (for testing only)
 
-> **Note:** Replacing the abandoned Cling/BSAF libraries with maintained alternatives (jUPnP, etc.) is on the modernization roadmap for this fork.
+> **Note:** BSAF replacement is still on the modernization roadmap for this fork.
 
 ### Language
 

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.chris.portmapper.router.cling;
+package org.chris.portmapper.router.jupnp;
 
 import static java.util.stream.Collectors.*;
 
@@ -38,25 +38,25 @@ import org.jdesktop.application.Application.ExitListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ClingRouterFactory extends AbstractRouterFactory {
+public class JUPnPRouterFactory extends AbstractRouterFactory {
 
     private static final Duration DISCOVERY_TIMEOUT = Duration.ofSeconds(3);
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public ClingRouterFactory(final PortMapperApp app) {
-        super(app, "Cling lib");
+    public JUPnPRouterFactory(final PortMapperApp app) {
+        super(app, "JUPnP lib");
     }
 
     @Override
     protected List<IRouter> findRoutersInternal() throws RouterException {
         final UpnpServiceConfiguration config = new DefaultUpnpServiceConfiguration();
-        final ClingRegistryListener clingRegistryListener = new ClingRegistryListener();
+        final JUPnPRegistryListener clingRegistryListener = new JUPnPRegistryListener();
         final UpnpService upnpService = new UpnpServiceImpl(config);
         upnpService.getRegistry().addListener(clingRegistryListener);
         upnpService.startup();
         shutdownServiceOnExit(upnpService);
 
-        final UpnpHeader<?> searchType = new UDADeviceTypeHeader(ClingRegistryListener.IGD_DEVICE_TYPE);
+        final UpnpHeader<?> searchType = new UDADeviceTypeHeader(JUPnPRegistryListener.IGD_DEVICE_TYPE);
         log.info("Start searching {} for device type {}", DISCOVERY_TIMEOUT, searchType);
         upnpService.getControlPoint().search(searchType, (int) DISCOVERY_TIMEOUT.toSeconds());
         return clingRegistryListener
@@ -66,8 +66,8 @@ public class ClingRouterFactory extends AbstractRouterFactory {
                 .collect(toList());
     }
 
-    private ClingRouter createRouter(final RemoteService service, final UpnpService upnpService) {
-        return new ClingRouter(service, upnpService.getRegistry(), upnpService.getControlPoint());
+    private JUPnPRouter createRouter(final RemoteService service, final UpnpService upnpService) {
+        return new JUPnPRouter(service, upnpService.getRegistry(), upnpService.getControlPoint());
     }
 
     private void shutdownServiceOnExit(final UpnpService upnpService) {
@@ -88,6 +88,6 @@ public class ClingRouterFactory extends AbstractRouterFactory {
     @Override
     protected IRouter connect(final String locationUrl) throws RouterException {
         throw new UnsupportedOperationException(
-                "Direct connection via location URL is not supported for Cling library.");
+                "Direct connection via location URL is not supported for JUPnP library.");
     }
 }

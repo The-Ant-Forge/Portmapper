@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.chris.portmapper.router.cling;
+package org.chris.portmapper.router.jupnp;
 
 import java.net.URI;
 import java.util.Collection;
@@ -24,10 +24,10 @@ import org.chris.portmapper.model.PortMapping;
 import org.chris.portmapper.model.Protocol;
 import org.chris.portmapper.router.AbstractRouter;
 import org.chris.portmapper.router.RouterException;
-import org.chris.portmapper.router.cling.action.ActionService;
-import org.chris.portmapper.router.cling.action.AddPortMappingAction;
-import org.chris.portmapper.router.cling.action.DeletePortMappingAction;
-import org.chris.portmapper.router.cling.action.GetExternalIpAction;
+import org.chris.portmapper.router.jupnp.action.ActionService;
+import org.chris.portmapper.router.jupnp.action.AddPortMappingAction;
+import org.chris.portmapper.router.jupnp.action.DeletePortMappingAction;
+import org.chris.portmapper.router.jupnp.action.GetExternalIpAction;
 import org.jupnp.controlpoint.ControlPoint;
 import org.jupnp.model.meta.DeviceDetails;
 import org.jupnp.model.meta.RemoteDevice;
@@ -38,7 +38,7 @@ import org.jupnp.registry.Registry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ClingRouter extends AbstractRouter {
+public class JUPnPRouter extends AbstractRouter {
 
     /**
      * The maximum number of port mappings that we will try to retrieve from the router.
@@ -53,7 +53,7 @@ public class ClingRouter extends AbstractRouter {
 
     private final ActionService actionService;
 
-    public ClingRouter(final RemoteService service, final Registry registry, final ControlPoint controlPoint) {
+    public JUPnPRouter(final RemoteService service, final Registry registry, final ControlPoint controlPoint) {
         super(getName(service));
         this.service = service;
         this.registry = registry;
@@ -102,7 +102,7 @@ public class ClingRouter extends AbstractRouter {
 
     @Override
     public Collection<PortMapping> getPortMappings() throws RouterException {
-        return new ClingPortMappingExtractor(actionService, MAX_NUM_PORTMAPPINGS).getPortMappings();
+        return new JUPnPPortMappingExtractor(actionService, MAX_NUM_PORTMAPPINGS).getPortMappings();
     }
 
     @Override

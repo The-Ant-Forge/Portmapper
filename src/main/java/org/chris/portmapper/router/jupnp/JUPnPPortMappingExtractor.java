@@ -15,14 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.chris.portmapper.router.cling;
+package org.chris.portmapper.router.jupnp;
 
 import java.util.Collection;
 import java.util.LinkedList;
 
 import org.chris.portmapper.model.PortMapping;
-import org.chris.portmapper.router.cling.action.ActionService;
-import org.chris.portmapper.router.cling.action.GetPortMappingEntryAction;
+import org.chris.portmapper.router.jupnp.action.ActionService;
+import org.chris.portmapper.router.jupnp.action.GetPortMappingEntryAction;
 import org.jupnp.model.message.control.IncomingActionResponseMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +32,7 @@ import net.sbbi.upnp.impls.InternetGatewayDevice;
 /**
  * This class fetches all {@link PortMapping} from an {@link InternetGatewayDevice}.
  */
-class ClingPortMappingExtractor {
+class JUPnPPortMappingExtractor {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Collection<PortMapping> mappings;
@@ -45,7 +45,7 @@ class ClingPortMappingExtractor {
     private final int maxNumPortMappings;
     private final ActionService actionService;
 
-    ClingPortMappingExtractor(final ActionService actionService, final int maxNumPortMappings) {
+    JUPnPPortMappingExtractor(final ActionService actionService, final int maxNumPortMappings) {
         this.actionService = actionService;
         this.maxNumPortMappings = maxNumPortMappings;
         this.mappings = new LinkedList<>();
@@ -70,7 +70,7 @@ class ClingPortMappingExtractor {
                 final PortMapping portMapping = actionService
                         .run(new GetPortMappingEntryAction(actionService.getService(), currentMappingNumber));
                 mappings.add(portMapping);
-            } catch (final ClingOperationFailedException e) {
+            } catch (final JUPnPOperationFailedException e) {
                 handleFailureResponse(e.getResponse());
             }
             currentMappingNumber++;

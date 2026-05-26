@@ -15,39 +15,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.chris.portmapper.router.cling.action;
+package org.chris.portmapper.router.jupnp.action;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.chris.portmapper.model.PortMapping;
 import org.jupnp.model.action.ActionInvocation;
-import org.jupnp.model.meta.RemoteDevice;
 import org.jupnp.model.meta.RemoteService;
-import org.jupnp.model.meta.Service;
-import org.jupnp.model.types.UnsignedIntegerFourBytes;
 import org.jupnp.model.types.UnsignedIntegerTwoBytes;
 
-public class AddPortMappingAction extends AbstractClingAction<Void> {
+public class DeletePortMappingAction extends AbstractJUPnPAction<Void> {
 
-    private final PortMapping portMapping;
+    private final int externalPort;
+    private final String protocol;
+    private final String remoteHost;
 
-    public AddPortMappingAction(final Service<RemoteDevice, RemoteService> service, final PortMapping portMapping) {
-        super(service, "AddPortMapping");
-        this.portMapping = portMapping;
+    public DeletePortMappingAction(final RemoteService service, final PortMapping portMapping) {
+        super(service, "DeletePortMapping");
+        this.externalPort = portMapping.getExternalPort();
+        this.protocol = portMapping.getProtocol().getName();
+        this.remoteHost = portMapping.getRemoteHost();
     }
 
     @Override
     public Map<String, Object> getArgumentValues() {
         final HashMap<String, Object> args = new HashMap<>();
-        args.put("NewExternalPort", new UnsignedIntegerTwoBytes(portMapping.getExternalPort()));
-        args.put("NewProtocol", portMapping.getProtocol());
-        args.put("NewInternalClient", portMapping.getInternalClient());
-        args.put("NewInternalPort", new UnsignedIntegerTwoBytes(portMapping.getInternalPort()));
-        args.put("NewLeaseDuration", new UnsignedIntegerFourBytes(portMapping.getLeaseDuration()));
-        args.put("NewEnabled", portMapping.isEnabled());
-        args.put("NewRemoteHost", portMapping.getRemoteHost());
-        args.put("NewPortMappingDescription", portMapping.getDescription());
+        args.put("NewExternalPort", new UnsignedIntegerTwoBytes(externalPort));
+        args.put("NewProtocol", protocol);
+        args.put("NewRemoteHost", remoteHost);
         return args;
     }
 

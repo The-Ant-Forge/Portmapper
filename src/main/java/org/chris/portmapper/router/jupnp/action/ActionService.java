@@ -15,12 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.chris.portmapper.router.cling.action;
+package org.chris.portmapper.router.jupnp.action;
 
 import java.net.URL;
 
-import org.chris.portmapper.router.cling.ClingOperationFailedException;
-import org.chris.portmapper.router.cling.ClingRouterException;
+import org.chris.portmapper.router.jupnp.JUPnPOperationFailedException;
+import org.chris.portmapper.router.jupnp.JUPnPRouterException;
 import org.jupnp.controlpoint.ControlPoint;
 import org.jupnp.model.action.ActionInvocation;
 import org.jupnp.model.message.control.IncomingActionResponseMessage;
@@ -40,7 +40,7 @@ public class ActionService {
         this.controlPoint = controlPoint;
     }
 
-    public <T> T run(final ClingAction<T> action) {
+    public <T> T run(final JUPnPAction<T> action) {
         // Figure out the remote URL where we'd like to send the action request to
         final URL controLURL = remoteService.getDevice().normalizeURI(remoteService.getControlURI());
 
@@ -52,12 +52,12 @@ public class ActionService {
         if (response == null) {
             final String message = "Got null response for action " + actionInvocation;
             logger.error(message);
-            throw new ClingRouterException(message);
+            throw new JUPnPRouterException(message);
         } else if (response.getOperation().isFailed()) {
             final String message = "Invocation " + actionInvocation + " failed with operation '"
                     + response.getOperation() + "', body '" + response.getBodyString() + "'";
             logger.error(message);
-            throw new ClingOperationFailedException(message, response);
+            throw new JUPnPOperationFailedException(message, response);
         }
         return action.convert(actionInvocation);
     }

@@ -15,24 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.chris.portmapper.router.cling;
+/**
+ *
+ */
+package org.chris.portmapper.router.jupnp.action;
 
-import org.jupnp.model.message.control.IncomingActionResponseMessage;
+import org.jupnp.model.action.ActionInvocation;
+import org.jupnp.model.meta.RemoteService;
 
-public class ClingOperationFailedException extends ClingRouterException {
+public class GetExternalIpAction extends AbstractJUPnPAction<String> {
 
-    private static final long serialVersionUID = 1L;
-    private final transient IncomingActionResponseMessage response;
-
-    public ClingOperationFailedException(final String message, final IncomingActionResponseMessage response) {
-        super(message);
-        if (!response.getOperation().isFailed()) {
-            throw new IllegalArgumentException("Operation was succesful");
-        }
-        this.response = response;
+    public GetExternalIpAction(final RemoteService service) {
+        super(service, "GetExternalIPAddress");
     }
 
-    public IncomingActionResponseMessage getResponse() {
-        return response;
+    @Override
+    public String convert(final ActionInvocation<RemoteService> invocation) {
+        return (String) invocation.getOutput("NewExternalIPAddress").getValue();
     }
 }

@@ -15,12 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.chris.portmapper.router.cling.action;
+package org.chris.portmapper.router.jupnp.action;
 
 import org.jupnp.model.action.ActionInvocation;
 import org.jupnp.model.meta.RemoteService;
 
-public interface ClingAction<T> {
+public interface JUPnPAction<T> {
 
     ActionInvocation<RemoteService> getActionInvocation();
 

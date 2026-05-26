@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.chris.portmapper.router.cling.action;
+package org.chris.portmapper.router.jupnp.action;
 
 import java.util.Collections;
 import java.util.Map;
@@ -29,7 +29,7 @@ import org.jupnp.model.meta.Service;
 import org.jupnp.model.types.UnsignedIntegerFourBytes;
 import org.jupnp.model.types.UnsignedIntegerTwoBytes;
 
-public class GetPortMappingEntryAction extends AbstractClingAction<PortMapping> {
+public class GetPortMappingEntryAction extends AbstractJUPnPAction<PortMapping> {
 
     private final int index;
 

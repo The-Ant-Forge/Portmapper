@@ -15,20 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/**
- *
- */
-package org.chris.portmapper.router.cling;
+package org.chris.portmapper.router.jupnp;
 
-public class ClingRouterException extends RuntimeException {
+import org.jupnp.model.message.control.IncomingActionResponseMessage;
+
+public class JUPnPOperationFailedException extends JUPnPRouterException {
 
     private static final long serialVersionUID = 1L;
+    private final transient IncomingActionResponseMessage response;
 
-    public ClingRouterException(final String message, final Throwable cause) {
-        super(message, cause);
+    public JUPnPOperationFailedException(final String message, final IncomingActionResponseMessage response) {
+        super(message);
+        if (!response.getOperation().isFailed()) {
+            throw new IllegalArgumentException("Operation was succesful");
+        }
+        this.response = response;
     }
 
-    public ClingRouterException(final String message) {
-        super(message);
+    public IncomingActionResponseMessage getResponse() {
+        return response;
     }
 }

@@ -27,7 +27,7 @@ import org.chris.portmapper.model.Protocol;
 import org.chris.portmapper.router.AbstractRouterFactory;
 import org.chris.portmapper.router.IRouter;
 import org.chris.portmapper.router.RouterException;
-import org.chris.portmapper.router.cling.ClingRouterFactory;
+import org.chris.portmapper.router.jupnp.JUPnPRouterFactory;
 import org.jdesktop.application.Application;
 import org.jdesktop.application.utils.AppHelper;
 import org.jdesktop.application.utils.PlatformType;
@@ -39,7 +39,7 @@ public class PortMapperCli {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final CommandLineArguments cmdLineArgs;
-    private String routerFactoryClassName = ClingRouterFactory.class.getName();
+    private String routerFactoryClassName = JUPnPRouterFactory.class.getName();
     private Integer routerIndex = null;
 
     public PortMapperCli() {

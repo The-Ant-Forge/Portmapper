@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.chris.portmapper.router.cling.action;
+package org.chris.portmapper.router.jupnp.action;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.chris.portmapper.router.cling.ClingRouterException;
+import org.chris.portmapper.router.jupnp.JUPnPRouterException;
 import org.jupnp.model.action.ActionArgumentValue;
 import org.jupnp.model.action.ActionInvocation;
 import org.jupnp.model.meta.Action;
@@ -35,14 +35,14 @@ import org.jupnp.model.meta.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-abstract class AbstractClingAction<T> implements ClingAction<T> {
+abstract class AbstractJUPnPAction<T> implements JUPnPAction<T> {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final Service<RemoteDevice, RemoteService> service;
     private final String actionName;
 
-    protected AbstractClingAction(final Service<RemoteDevice, RemoteService> service, final String actionName) {
+    protected AbstractJUPnPAction(final Service<RemoteDevice, RemoteService> service, final String actionName) {
         this.service = service;
         this.actionName = actionName;
     }
@@ -55,7 +55,7 @@ abstract class AbstractClingAction<T> implements ClingAction<T> {
     public ActionInvocation<RemoteService> getActionInvocation() {
         final Action<RemoteService> action = service.getAction(actionName);
         if (action == null) {
-            throw new ClingRouterException("No action found for name '" + actionName + "'. Available actions: "
+            throw new JUPnPRouterException("No action found for name '" + actionName + "'. Available actions: "
                     + Arrays.toString(service.getActions()));
         }
         final ActionArgumentValue<RemoteService>[] argumentArray = getArguments(action);

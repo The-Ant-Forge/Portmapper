@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.chris.portmapper.router.cling;
+package org.chris.portmapper.router.jupnp;
 
 import java.time.Duration;
 import java.util.Queue;
@@ -33,7 +33,7 @@ import org.jupnp.registry.Registry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ClingRegistryListener extends DefaultRegistryListener {
+public class JUPnPRegistryListener extends DefaultRegistryListener {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -45,7 +45,7 @@ public class ClingRegistryListener extends DefaultRegistryListener {
 
     private final Queue<Service<?, ?>> foundServices;
 
-    public ClingRegistryListener() {
+    public JUPnPRegistryListener() {
         this.foundServices = new ConcurrentLinkedQueue<>();
     }
 

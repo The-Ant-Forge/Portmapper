@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.chris.portmapper.model.PortMappingPreset;
-import org.chris.portmapper.router.cling.ClingRouterFactory;
+import org.chris.portmapper.router.jupnp.JUPnPRouterFactory;
 
 import ch.qos.logback.classic.Level;
 
@@ -47,7 +47,7 @@ public class Settings implements Serializable {
         useEntityEncoding = true;
         logLevel = Level.INFO.toString();
         presets = new ArrayList<>();
-        routerFactoryClassName = ClingRouterFactory.class.getName();
+        routerFactoryClassName = JUPnPRouterFactory.class.getName();
         propertyChangeSupport = new PropertyChangeSupport(this);
     }
 
@@ -105,6 +105,12 @@ public class Settings implements Serializable {
     }
 
     public String getRouterFactoryClassName() {
+        // Migration shim: settings.xml files written before the cling -> jupnp
+        // package/class rename hold the old FQCN. Rewrite on first read so the
+        // next save self-heals the file.
+        if ("org.chris.portmapper.router.cling.ClingRouterFactory".equals(routerFactoryClassName)) {
+            routerFactoryClassName = JUPnPRouterFactory.class.getName();
+        }
         return routerFactoryClassName;
     }
 

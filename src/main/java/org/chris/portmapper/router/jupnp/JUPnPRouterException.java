@@ -18,19 +18,17 @@
 /**
  *
  */
-package org.chris.portmapper.router.cling.action;
+package org.chris.portmapper.router.jupnp;
 
-import org.jupnp.model.action.ActionInvocation;
-import org.jupnp.model.meta.RemoteService;
+public class JUPnPRouterException extends RuntimeException {
 
-public class GetExternalIpAction extends AbstractClingAction<String> {
+    private static final long serialVersionUID = 1L;
 
-    public GetExternalIpAction(final RemoteService service) {
-        super(service, "GetExternalIPAddress");
+    public JUPnPRouterException(final String message, final Throwable cause) {
+        super(message, cause);
     }
 
-    @Override
-    public String convert(final ActionInvocation<RemoteService> invocation) {
-        return (String) invocation.getOutput("NewExternalIPAddress").getValue();
+    public JUPnPRouterException(final String message) {
+        super(message);
     }
 }

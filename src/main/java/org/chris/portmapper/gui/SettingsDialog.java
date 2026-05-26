@@ -36,7 +36,7 @@ import javax.swing.WindowConstants;
 
 import org.chris.portmapper.PortMapperApp;
 import org.chris.portmapper.Settings;
-import org.chris.portmapper.router.cling.ClingRouterFactory;
+import org.chris.portmapper.router.jupnp.JUPnPRouterFactory;
 import org.chris.portmapper.router.dummy.DummyRouterFactory;
 import org.chris.portmapper.router.sbbi.SBBIRouterFactory;
 import org.chris.portmapper.router.weupnp.WeUPnPRouterFactory;
@@ -54,7 +54,7 @@ import net.miginfocom.swing.MigLayout;
 @SuppressWarnings("squid:MaximumInheritanceDepth")
 public class SettingsDialog extends JDialog {
 
-    private static final List<String> AVAILABLE_ROUTER_FACTORIES = Arrays.asList(ClingRouterFactory.class.getName(),
+    private static final List<String> AVAILABLE_ROUTER_FACTORIES = Arrays.asList(JUPnPRouterFactory.class.getName(),
             SBBIRouterFactory.class.getName(), WeUPnPRouterFactory.class.getName(), DummyRouterFactory.class.getName());
 
     private static final List<Level> AVAILABLE_LOG_LEVELS = Arrays.asList(Level.TRACE, Level.DEBUG,
