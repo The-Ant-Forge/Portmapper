@@ -18,7 +18,7 @@
 package org.chris.portmapper.router.sbbi;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -27,11 +27,13 @@ import java.util.HashSet;
 
 import org.chris.portmapper.model.PortMapping;
 import org.chris.portmapper.router.RouterException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.slf4j.Logger;
 
 import net.sbbi.upnp.impls.InternetGatewayDevice;
@@ -41,28 +43,23 @@ import net.sbbi.upnp.messages.UPNPResponseException;
 /**
  * Unit tests for {@link SBBIPortMappingExtractor}.
  */
-public class TestPortMappingExtractor {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class TestPortMappingExtractor {
 
     @Mock
     private InternetGatewayDevice routerMock;
     @Mock
     private Logger loggerMock;
     private SBBIPortMappingExtractor portMappingExtractor;
-    private AutoCloseable mocks;
 
-    @Before
-    public void setUp() {
-        mocks = MockitoAnnotations.openMocks(this);
+    @BeforeEach
+    void setUp() {
         portMappingExtractor = new SBBIPortMappingExtractor(routerMock, 5, loggerMock);
     }
 
-    @After
-    public void teardown() throws Exception {
-        mocks.close();
-    }
-
     @Test
-    public void allMappingsNull() throws RouterException, IOException, UPNPResponseException {
+    void allMappingsNull() throws RouterException, IOException, UPNPResponseException {
         simulateUPNPException(5, 713);
         assertEquals(0, portMappingExtractor.getPortMappings().size());
         verify(loggerMock, times(1)).warn(anyString(), anyInt());
@@ -71,7 +68,7 @@ public class TestPortMappingExtractor {
     }
 
     @Test
-    public void allMappingsNullMaxNumReached() throws RouterException {
+    void allMappingsNullMaxNumReached() throws RouterException {
         assertEquals(0, portMappingExtractor.getPortMappings().size());
         verify(loggerMock, times(1)).warn(anyString(), anyInt());
         verify(loggerMock, never()).error(anyString());
@@ -79,7 +76,7 @@ public class TestPortMappingExtractor {
     }
 
     @Test
-    public void noMapping() throws RouterException, IOException, UPNPResponseException {
+    void noMapping() throws RouterException, IOException, UPNPResponseException {
         simulateUPNPException(0, 713);
         assertEquals(0, portMappingExtractor.getPortMappings().size());
         assertNoWarningOrErrorLogged();
@@ -87,7 +84,7 @@ public class TestPortMappingExtractor {
     }
 
     @Test
-    public void wrongErrorCode() throws RouterException, IOException, UPNPResponseException {
+    void wrongErrorCode() throws RouterException, IOException, UPNPResponseException {
         simulateUPNPException(0, 42);
         assertEquals(0, portMappingExtractor.getPortMappings().size());
         verify(loggerMock, never()).warn(anyString());
@@ -98,7 +95,7 @@ public class TestPortMappingExtractor {
     }
 
     @Test
-    public void oneMapping() throws RouterException, IOException, UPNPResponseException {
+    void oneMapping() throws RouterException, IOException, UPNPResponseException {
         simulateMapping(0);
         simulateUPNPException(1, 713);
         assertEquals(1, portMappingExtractor.getPortMappings().size());
