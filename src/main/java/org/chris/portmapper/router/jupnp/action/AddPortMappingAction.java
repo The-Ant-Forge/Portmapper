@@ -40,14 +40,14 @@ public class AddPortMappingAction extends AbstractJUPnPAction<Void> {
     @Override
     public Map<String, Object> getArgumentValues() {
         final HashMap<String, Object> args = new HashMap<>();
-        args.put("NewExternalPort", new UnsignedIntegerTwoBytes(portMapping.getExternalPort()));
-        args.put("NewProtocol", portMapping.getProtocol());
-        args.put("NewInternalClient", portMapping.getInternalClient());
-        args.put("NewInternalPort", new UnsignedIntegerTwoBytes(portMapping.getInternalPort()));
-        args.put("NewLeaseDuration", new UnsignedIntegerFourBytes(portMapping.getLeaseDuration()));
-        args.put("NewEnabled", portMapping.isEnabled());
-        args.put("NewRemoteHost", portMapping.getRemoteHost());
-        args.put("NewPortMappingDescription", portMapping.getDescription());
+        args.put("NewExternalPort", new UnsignedIntegerTwoBytes(portMapping.externalPort()));
+        args.put("NewProtocol", portMapping.protocol());
+        args.put("NewInternalClient", portMapping.internalClient());
+        args.put("NewInternalPort", new UnsignedIntegerTwoBytes(portMapping.internalPort()));
+        args.put("NewLeaseDuration", new UnsignedIntegerFourBytes(portMapping.leaseDuration()));
+        args.put("NewEnabled", portMapping.enabled());
+        args.put("NewRemoteHost", portMapping.remoteHost());
+        args.put("NewPortMappingDescription", portMapping.description());
         return args;
     }
 

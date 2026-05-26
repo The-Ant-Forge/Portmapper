@@ -57,43 +57,27 @@ public class PortMappingsTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(final int row, final int col) {
         final PortMapping mapping = mappings.get(row);
-        switch (col) {
-        case 0:
-            return mapping.getProtocol();
-        case 1:
-            return (mapping.getRemoteHost() != null ? mapping.getRemoteHost() : ""); //$NON-NLS-1$
-        case 2:
-            return mapping.getExternalPort();
-        case 3:
-            return mapping.getInternalClient();
-        case 4:
-            return mapping.getInternalPort();
-        case 5:
-            return mapping.getDescription();
-        default:
-            throw new IllegalArgumentException("Column " + col //$NON-NLS-1$
-                    + " does not exist"); //$NON-NLS-1$
-        }
+        return switch (col) {
+            case 0 -> mapping.protocol();
+            case 1 -> mapping.remoteHost() != null ? mapping.remoteHost() : "";
+            case 2 -> mapping.externalPort();
+            case 3 -> mapping.internalClient();
+            case 4 -> mapping.internalPort();
+            case 5 -> mapping.description();
+            default -> throw new IllegalArgumentException("Column " + col + " does not exist");
+        };
     }
 
     @Override
     public String getColumnName(final int col) {
-        switch (col) {
-        case 0:
-            return Messages.get("mainFrame.mappings.protocol"); //$NON-NLS-1$
-        case 1:
-            return Messages.get("mainFrame.mappings.remote_host"); //$NON-NLS-1$
-        case 2:
-            return Messages.get("mainFrame.mappings.external_port"); //$NON-NLS-1$
-        case 3:
-            return Messages.get("mainFrame.mappings.internal_client"); //$NON-NLS-1$
-        case 4:
-            return Messages.get("mainFrame.mappings.internal_port"); //$NON-NLS-1$
-        case 5:
-            return Messages.get("mainFrame.mappings.description"); //$NON-NLS-1$
-        default:
-            throw new IllegalArgumentException("Column " + col //$NON-NLS-1$
-                    + " does not exist"); //$NON-NLS-1$
-        }
+        return switch (col) {
+            case 0 -> Messages.get("mainFrame.mappings.protocol");
+            case 1 -> Messages.get("mainFrame.mappings.remote_host");
+            case 2 -> Messages.get("mainFrame.mappings.external_port");
+            case 3 -> Messages.get("mainFrame.mappings.internal_client");
+            case 4 -> Messages.get("mainFrame.mappings.internal_port");
+            case 5 -> Messages.get("mainFrame.mappings.description");
+            default -> throw new IllegalArgumentException("Column " + col + " does not exist");
+        };
     }
 }

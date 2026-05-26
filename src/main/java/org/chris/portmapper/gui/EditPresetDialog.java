@@ -233,11 +233,11 @@ public class EditPresetDialog extends JDialog {
     }
 
     protected void presetSelected(final PortMapping item) {
-        this.presetNameTextField.setText(item.getDescription());
-        this.remoteHostTextField.setText(item.getRemoteHost());
-        if (item.getInternalClient() != null) {
+        this.presetNameTextField.setText(item.description());
+        this.remoteHostTextField.setText(item.remoteHost());
+        if (item.internalClient() != null) {
             this.useLocalhostCheckBox.setSelected(false);
-            this.internalClientTextField.setText(item.getInternalClient());
+            this.internalClientTextField.setText(item.internalClient());
         }
     }
 

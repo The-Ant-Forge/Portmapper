@@ -54,8 +54,8 @@ public class WeUPnPRouter extends AbstractRouter {
     @Override
     public void addPortMapping(final PortMapping mapping) throws RouterException {
         try {
-            device.addPortMapping(mapping.getExternalPort(), mapping.getInternalPort(), mapping.getInternalClient(),
-                    mapping.getProtocol().getName(), mapping.getDescription());
+            device.addPortMapping(mapping.externalPort(), mapping.internalPort(), mapping.internalClient(),
+                    mapping.protocol().getName(), mapping.description());
         } catch (final Exception e) {
             throw new RouterException("Could not add portmapping", e);
         }
@@ -161,7 +161,7 @@ public class WeUPnPRouter extends AbstractRouter {
 
     @Override
     public void removeMapping(final PortMapping mapping) throws RouterException {
-        this.removePortMapping(mapping.getProtocol(), mapping.getRemoteHost(), mapping.getExternalPort());
+        this.removePortMapping(mapping.protocol(), mapping.remoteHost(), mapping.externalPort());
     }
 
     @Override

@@ -23,9 +23,28 @@ import java.util.Map;
 import net.sbbi.upnp.messages.ActionResponse;
 
 /**
- * This immutable class represents a port mapping / forwarding on a router.
+ * Represents a port mapping / forwarding on a router. Transient data carrier
+ * (not persisted to {@code settings.xml}); only the user-defined
+ * {@link PortMappingPreset} graph is.
+ *
+ * @param protocol the network protocol of the mapping (TCP or UDP).
+ * @param remoteHost the remote host the mapping applies to, or {@code null} for any.
+ * @param externalPort the external (WAN-facing) port.
+ * @param internalClient the internal LAN IP the mapping targets.
+ * @param internalPort the internal LAN port the mapping targets.
+ * @param description a free-form description.
+ * @param enabled whether the mapping is enabled.
+ * @param leaseDuration the lease duration in seconds, {@code 0} for "permanent".
  */
-public class PortMapping {
+public record PortMapping(
+        Protocol protocol,
+        String remoteHost,
+        int externalPort,
+        String internalClient,
+        int internalPort,
+        String description,
+        boolean enabled,
+        long leaseDuration) {
 
     public static final String MAPPING_ENTRY_LEASE_DURATION = "NewLeaseDuration";
     public static final String MAPPING_ENTRY_ENABLED = "NewEnabled";
@@ -38,93 +57,50 @@ public class PortMapping {
 
     private static final long DEFAULT_LEASE_DURATION = 0;
 
-    private final int externalPort;
-    private final Protocol protocol;
-    private final int internalPort;
-    private final String description;
-    private final String internalClient;
-    private final String remoteHost;
-    private final boolean enabled;
-    private final long leaseDuration;
-
+    /**
+     * Convenience constructor that defaults {@code enabled=true} and the lease
+     * duration to {@value #DEFAULT_LEASE_DURATION}. Most callers in the codebase
+     * use this form; the canonical 8-arg constructor is for callers that need to
+     * encode the full SBBI/UPnP-IGD response fields.
+     */
     public PortMapping(final Protocol protocol, final String remoteHost, final int externalPort,
             final String internalClient, final int internalPort, final String description) {
         this(protocol, remoteHost, externalPort, internalClient, internalPort, description, true,
                 DEFAULT_LEASE_DURATION);
     }
 
-    public PortMapping(final Protocol protocol, final String remoteHost, final int externalPort,
-            final String internalClient, final int internalPort, final String description, final boolean enabled,
-            final long leaseDuration) {
-        this.protocol = protocol;
-        this.remoteHost = remoteHost;
-        this.externalPort = externalPort;
-        this.internalClient = internalClient;
-        this.internalPort = internalPort;
-        this.description = description;
-        this.enabled = enabled;
-        this.leaseDuration = leaseDuration;
-    }
-
-    private PortMapping(final ActionResponse response) {
+    /**
+     * Build a {@link PortMapping} from an SBBI {@link ActionResponse}. The SBBI
+     * library returns mapping data as an untyped name/value bag keyed by the
+     * {@code MAPPING_ENTRY_*} constants.
+     *
+     * @param response the action response returned by the SBBI library.
+     * @return a populated {@code PortMapping}.
+     */
+    public static PortMapping create(final ActionResponse response) {
         final Map<String, String> values = new HashMap<>();
-
         for (final Object argObj : response.getOutActionArgumentNames()) {
             final String argName = (String) argObj;
             values.put(argName, response.getOutActionArgumentValue(argName));
         }
 
-        externalPort = Integer.parseInt(values.get(MAPPING_ENTRY_EXTERNAL_PORT));
-        internalPort = Integer.parseInt(values.get(MAPPING_ENTRY_INTERNAL_PORT));
+        final int externalPort = Integer.parseInt(values.get(MAPPING_ENTRY_EXTERNAL_PORT));
+        final int internalPort = Integer.parseInt(values.get(MAPPING_ENTRY_INTERNAL_PORT));
         final String protocolString = values.get(MAPPING_ENTRY_PROTOCOL);
-        protocol = (protocolString.equalsIgnoreCase("TCP") ? Protocol.TCP : Protocol.UDP);
-        description = values.get(MAPPING_ENTRY_PORT_MAPPING_DESCRIPTION);
-        internalClient = values.get(MAPPING_ENTRY_INTERNAL_CLIENT);
-        remoteHost = values.get(MAPPING_ENTRY_REMOTE_HOST);
+        final Protocol protocol = "TCP".equalsIgnoreCase(protocolString) ? Protocol.TCP : Protocol.UDP;
+        final String description = values.get(MAPPING_ENTRY_PORT_MAPPING_DESCRIPTION);
+        final String internalClient = values.get(MAPPING_ENTRY_INTERNAL_CLIENT);
+        final String remoteHost = values.get(MAPPING_ENTRY_REMOTE_HOST);
         final String enabledString = values.get(MAPPING_ENTRY_ENABLED);
-        enabled = enabledString != null && enabledString.equals("1");
-        leaseDuration = Long.parseLong(values.get(MAPPING_ENTRY_LEASE_DURATION));
-    }
-
-    public static PortMapping create(final ActionResponse response) {
-        return new PortMapping(response);
+        final boolean enabled = "1".equals(enabledString);
+        final long leaseDuration = Long.parseLong(values.get(MAPPING_ENTRY_LEASE_DURATION));
+        return new PortMapping(protocol, remoteHost, externalPort, internalClient, internalPort, description,
+                enabled, leaseDuration);
     }
 
     /**
-     * @return the leaseDuration
+     * @return a human-readable rendering of every field, used by the in-app log.
      */
-    public long getLeaseDuration() {
-        return leaseDuration;
-    }
-
-    public int getExternalPort() {
-        return externalPort;
-    }
-
-    public Protocol getProtocol() {
-        return protocol;
-    }
-
-    public int getInternalPort() {
-        return internalPort;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getInternalClient() {
-        return internalClient;
-    }
-
-    public String getRemoteHost() {
-        return remoteHost;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
     public String getCompleteDescription() {
         final StringBuilder b = new StringBuilder();
         b.append(protocol);
@@ -145,6 +121,7 @@ public class PortMapping {
         return b.toString();
     }
 
+    /** {@inheritDoc} — overridden from the record default to return just the description. */
     @Override
     public String toString() {
         return description;

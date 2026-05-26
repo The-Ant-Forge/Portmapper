@@ -194,13 +194,13 @@ public class SBBIRouter extends AbstractRouter {
     @Override
     public void addPortMapping(final PortMapping mapping) throws RouterException {
         logger.info("Adding port mapping {}", mapping.getCompleteDescription());
-        addPortMapping(mapping.getDescription(), mapping.getProtocol(),
-                mapping.getExternalPort(), mapping.getInternalClient(), mapping.getInternalPort(), 0);
+        addPortMapping(mapping.description(), mapping.protocol(),
+                mapping.externalPort(), mapping.internalClient(), mapping.internalPort(), 0);
     }
 
     @Override
     public void removeMapping(final PortMapping mapping) throws RouterException {
-        removePortMapping(mapping.getProtocol(), mapping.getRemoteHost(), mapping.getExternalPort());
+        removePortMapping(mapping.protocol(), mapping.remoteHost(), mapping.externalPort());
     }
 
     @Override

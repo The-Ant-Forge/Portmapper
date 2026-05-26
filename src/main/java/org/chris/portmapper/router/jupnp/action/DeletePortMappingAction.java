@@ -33,9 +33,9 @@ public class DeletePortMappingAction extends AbstractJUPnPAction<Void> {
 
     public DeletePortMappingAction(final RemoteService service, final PortMapping portMapping) {
         super(service, "DeletePortMapping");
-        this.externalPort = portMapping.getExternalPort();
-        this.protocol = portMapping.getProtocol().getName();
-        this.remoteHost = portMapping.getRemoteHost();
+        this.externalPort = portMapping.externalPort();
+        this.protocol = portMapping.protocol().getName();
+        this.remoteHost = portMapping.remoteHost();
     }
 
     @Override

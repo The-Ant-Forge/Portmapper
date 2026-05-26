@@ -56,47 +56,31 @@ public class PortsTableModel extends AbstractTableModel implements PropertyChang
     @Override
     public Object getValueAt(final int rowIndex, final int columnIndex) {
         final SinglePortMapping port = ports.get(rowIndex);
-        switch (columnIndex) {
-        case 0:
-            return port.getProtocol();
-        case 1:
-            return port.getExternalPort();
-        case 2:
-            return port.getInternalPort();
-        default:
-            throw new IllegalArgumentException("Column " + columnIndex //$NON-NLS-1$
-                    + " does not exist"); //$NON-NLS-1$
-        }
+        return switch (columnIndex) {
+            case 0 -> port.getProtocol();
+            case 1 -> port.getExternalPort();
+            case 2 -> port.getInternalPort();
+            default -> throw new IllegalArgumentException("Column " + columnIndex + " does not exist");
+        };
     }
 
     @Override
     public Class<?> getColumnClass(final int columnIndex) {
-        switch (columnIndex) {
-        case 0:
-            return Protocol.class;
-        case 1:
-            return Integer.class;
-        case 2:
-            return Integer.class;
-        default:
-            throw new IllegalArgumentException("Column " + columnIndex //$NON-NLS-1$
-                    + " does not exist"); //$NON-NLS-1$
-        }
+        return switch (columnIndex) {
+            case 0 -> Protocol.class;
+            case 1, 2 -> Integer.class;
+            default -> throw new IllegalArgumentException("Column " + columnIndex + " does not exist");
+        };
     }
 
     @Override
     public String getColumnName(final int column) {
-        switch (column) {
-        case 0:
-            return Messages.get("preset_dialog.ports.protocol");
-        case 1:
-            return Messages.get("preset_dialog.ports.external");
-        case 2:
-            return Messages.get("preset_dialog.ports.internal");
-        default:
-            throw new IllegalArgumentException("Column " + column //$NON-NLS-1$
-                    + " does not exist"); //$NON-NLS-1$
-        }
+        return switch (column) {
+            case 0 -> Messages.get("preset_dialog.ports.protocol");
+            case 1 -> Messages.get("preset_dialog.ports.external");
+            case 2 -> Messages.get("preset_dialog.ports.internal");
+            default -> throw new IllegalArgumentException("Column " + column + " does not exist");
+        };
     }
 
     @Override
@@ -108,18 +92,10 @@ public class PortsTableModel extends AbstractTableModel implements PropertyChang
     public void setValueAt(final Object value, final int rowIndex, final int columnIndex) {
         final SinglePortMapping port = ports.get(rowIndex);
         switch (columnIndex) {
-        case 0:
-            port.setProtocol((Protocol) value);
-            break;
-        case 1:
-            port.setExternalPort((Integer) value);
-            break;
-        case 2:
-            port.setInternalPort((Integer) value);
-            break;
-        default:
-            throw new IllegalArgumentException("Column " + columnIndex //$NON-NLS-1$
-                    + " does not exist"); //$NON-NLS-1$
+            case 0 -> port.setProtocol((Protocol) value);
+            case 1 -> port.setExternalPort((Integer) value);
+            case 2 -> port.setInternalPort((Integer) value);
+            default -> throw new IllegalArgumentException("Column " + columnIndex + " does not exist");
         }
     }
 
