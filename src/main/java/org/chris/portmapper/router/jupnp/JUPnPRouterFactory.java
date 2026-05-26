@@ -50,8 +50,11 @@ public class JUPnPRouterFactory extends AbstractRouterFactory {
         final UpnpServiceConfiguration config = new DefaultUpnpServiceConfiguration();
         final JUPnPRegistryListener clingRegistryListener = new JUPnPRegistryListener();
         final UpnpService upnpService = new UpnpServiceImpl(config);
-        upnpService.getRegistry().addListener(clingRegistryListener);
+        // jUPnP creates the registry inside startup(); calling getRegistry() before
+        // startup() returns null. Cling's old (config, listener) constructor used to
+        // do both atomically, so the original code's ordering carried over wrong.
         upnpService.startup();
+        upnpService.getRegistry().addListener(clingRegistryListener);
         shutdownServiceOnExit(upnpService);
 
         final UpnpHeader<?> searchType = new UDADeviceTypeHeader(JUPnPRegistryListener.IGD_DEVICE_TYPE);
