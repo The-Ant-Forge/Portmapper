@@ -17,7 +17,7 @@ java -version
 ## Running
 
 ```sh
-java -jar portmapper-all.jar
+java -jar portmapper-<version>-all.jar
 ```
 
 or build and run in one step from a clone:
@@ -31,7 +31,7 @@ or build and run in one step from a clone:
 PortMapper supports a headless CLI mode in addition to the Swing GUI. See available options:
 
 ```
-java -jar portmapper-all.jar -h
+java -jar portmapper-<version>-all.jar -h
  -add                  : Add a new port mapping
  -delete               : Delete a port mapping
  -description VAL      : Description of the port mapping
@@ -52,31 +52,31 @@ java -jar portmapper-all.jar -h
 - Add a port mapping for a specific IP:
 
   ```sh
-  java -jar portmapper-all.jar -add -externalPort <port> -internalPort <port> -ip <ip-addr> -protocol tcp
+  java -jar portmapper-<version>-all.jar -add -externalPort <port> -internalPort <port> -ip <ip-addr> -protocol tcp
   ```
 
 - Add a port mapping for the local machine (omit IP):
 
   ```sh
-  java -jar portmapper-all.jar -add -externalPort <port> -internalPort <port> -protocol tcp
+  java -jar portmapper-<version>-all.jar -add -externalPort <port> -internalPort <port> -protocol tcp
   ```
 
 - Delete a port mapping:
 
   ```sh
-  java -jar portmapper-all.jar -delete -externalPort <port> -protocol tcp
+  java -jar portmapper-<version>-all.jar -delete -externalPort <port> -protocol tcp
   ```
 
 - List existing port mappings:
 
   ```sh
-  java -jar portmapper-all.jar -list
+  java -jar portmapper-<version>-all.jar -list
   ```
 
 - Use a specific UPnP backend library:
 
   ```sh
-  java -jar portmapper-all.jar -lib org.chris.portmapper.router.weupnp.WeUPnPRouterFactory -list
+  java -jar portmapper-<version>-all.jar -lib org.chris.portmapper.router.weupnp.WeUPnPRouterFactory -list
   ```
 
 ### UPnP libraries
@@ -95,7 +95,7 @@ PortMapper ships three third-party UPnP libraries. If the default doesn't work f
 PortMapper detects your OS language and uses English (`en`), German (`de`), Italian (`it`), or simplified Chinese (`zh`). To override:
 
 ```sh
-java "-Duser.language=de" -jar portmapper-all.jar
+java "-Duser.language=de" -jar portmapper-<version>-all.jar
 ```
 
 Note the quotes — required when passing `-D` options through PowerShell.
@@ -105,7 +105,7 @@ Note the quotes — required when passing `-D` options through PowerShell.
 PortMapper stores GUI settings as XML in a per-user directory. On Windows that's `%AppData%\UnknownApplicationVendor\PortMapper\`. Override with:
 
 ```sh
-java "-Dportmapper.config.dir=C:/path/to/config" -jar portmapper-all.jar
+java "-Dportmapper.config.dir=C:/path/to/config" -jar portmapper-<version>-all.jar
 ```
 
 The directory must exist before launching. CLI mode does not read this directory — all options must be passed as args.
@@ -116,7 +116,7 @@ When using the `weupnp` backend, you can bypass UPnP discovery and connect direc
 
 ```sh
 java "-Dportmapper.locationUrl=http://192.168.178.1:49000/igddesc.xml" \
-     -jar portmapper-all.jar \
+     -jar portmapper-<version>-all.jar \
      -lib org.chris.portmapper.router.weupnp.WeUPnPRouterFactory <args>
 ```
 
@@ -147,7 +147,7 @@ Some routers garbage-collect port mappings after a period. To work around this, 
 
 ```cmd
 :loop
-java -jar portmapper-all.jar -add -externalPort <port> -internalPort <port> -protocol tcp
+java -jar portmapper-<version>-all.jar -add -externalPort <port> -internalPort <port> -protocol tcp
 timeout 21600
 goto loop
 ```

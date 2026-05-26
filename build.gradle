@@ -48,7 +48,6 @@ processResources {
 
 shadowJar {
     archiveBaseName = 'portmapper'
-    archiveVersion = null
 }
 
 def mainClass = 'org.chris.portmapper.PortMapperStarter'

@@ -31,7 +31,7 @@ All commands use the Gradle wrapper. On Windows shells use `.\gradlew.bat`; ever
 | Check dependency updates | `./gradlew dependencyUpdates` |
 | Build against a non-default JDK | `./gradlew build -PjavaVersion=24` (default is 21; CI only tests 21) |
 
-Built artifact location: `build/libs/portmapper-all.jar` (no version suffix — `shadowJar` clears `archiveVersion`). The end-user invocation is `java -jar build/libs/portmapper-all.jar`.
+Built artifact location: `build/libs/portmapper-<version>-all.jar`. The end-user invocation is `java -jar build/libs/portmapper-<version>-all.jar`.
 
 ## Build gotchas worth knowing
 

@@ -31,4 +31,4 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: portmapper
-        path: build/libs/portmapper-all.jar
+        path: build/libs/portmapper-*-all.jar

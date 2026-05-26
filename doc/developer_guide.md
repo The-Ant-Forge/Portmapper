@@ -8,7 +8,7 @@
 
 ```sh
 ./gradlew build
-java -jar build/libs/portmapper-all.jar
+java -jar build/libs/portmapper-<version>-all.jar
 ```
 
 A single command builds and launches:
