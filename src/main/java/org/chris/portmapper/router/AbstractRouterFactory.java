@@ -19,6 +19,7 @@ package org.chris.portmapper.router;
 
 import static java.util.Arrays.*;
 
+import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.List;
 
@@ -33,6 +34,8 @@ public abstract class AbstractRouterFactory {
 
     private static final String LOCATION_URL_SYSTEM_PROPERTY = "portmapper.locationUrl";
 
+    private static final Logger staticLogger = LoggerFactory.getLogger(AbstractRouterFactory.class);
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected final PortMapperApp app;
@@ -42,6 +45,44 @@ public abstract class AbstractRouterFactory {
     protected AbstractRouterFactory(final PortMapperApp app, final String name) {
         this.app = app;
         this.name = name;
+    }
+
+    /**
+     * Resolve a concrete {@code AbstractRouterFactory} subclass by FQCN and
+     * instantiate it via its {@code public RouterFactory(PortMapperApp)}
+     * constructor. Shared by the GUI ({@code PortMapperApp.connectRouter}) and
+     * the CLI ({@code PortMapperCli.connect}) paths; the duplicated reflective
+     * dispatch they used to carry was code-review finding F9.
+     *
+     * @param className the fully-qualified class name of the factory subclass.
+     * @param owner the {@code PortMapperApp} to pass to the factory constructor;
+     *        the CLI path supplies a throwaway instance because the constructor
+     *        contract requires it.
+     * @return the instantiated factory.
+     * @throws RouterException if the class can't be loaded, has no matching
+     *         constructor, or the constructor invocation fails.
+     */
+    @SuppressWarnings("unchecked")
+    public static AbstractRouterFactory create(final String className, final PortMapperApp owner)
+            throws RouterException {
+        staticLogger.info("Creating router factory for class {}", className);
+        final Class<? extends AbstractRouterFactory> clazz;
+        try {
+            clazz = (Class<? extends AbstractRouterFactory>) Class.forName(className);
+        } catch (final ClassNotFoundException e) {
+            throw new RouterException("Did not find router factory class for name " + className, e);
+        }
+        final Constructor<? extends AbstractRouterFactory> constructor;
+        try {
+            constructor = clazz.getConstructor(PortMapperApp.class);
+        } catch (final NoSuchMethodException | SecurityException e) {
+            throw new RouterException("Could not find constructor of " + clazz.getName(), e);
+        }
+        try {
+            return constructor.newInstance(owner);
+        } catch (final ReflectiveOperationException e) {
+            throw new RouterException("Could not create a router factory using constructor " + constructor, e);
+        }
     }
 
     /**

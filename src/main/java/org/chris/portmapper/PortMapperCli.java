@@ -17,7 +17,6 @@
  */
 package org.chris.portmapper;
 
-import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -170,32 +169,12 @@ public class PortMapperCli {
                 || cmdLineArgs.isListPortMappings() || cmdLineArgs.isDeletePortMapping();
     }
 
-    private AbstractRouterFactory createRouterFactory() throws RouterException {
-        logger.info("Creating router factory for class {}", routerFactoryClassName);
-        final Class<AbstractRouterFactory> routerFactoryClass = getClassForName(routerFactoryClassName);
-        logger.debug("Creating a new instance of the router factory class {}", routerFactoryClass.getName());
-        try {
-            final Constructor<AbstractRouterFactory> constructor = routerFactoryClass
-                    .getConstructor(PortMapperApp.class);
-            return constructor.newInstance(new PortMapperApp());
-        } catch (final Exception e) {
-            throw new RouterException("Error creating a router factory using class " + routerFactoryClass.getName(), e);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Class<AbstractRouterFactory> getClassForName(final String className) throws RouterException {
-        try {
-            return (Class<AbstractRouterFactory>) Class.forName(className);
-        } catch (final ClassNotFoundException e) {
-            throw new RouterException("Did not find router factory class for name " + className, e);
-        }
-    }
-
     private IRouter connect() throws RouterException {
         final AbstractRouterFactory routerFactory;
         try {
-            routerFactory = createRouterFactory();
+            // Headless: the factory constructor contract requires a PortMapperApp but the CLI
+            // never reads back from it, so a throwaway is fine.
+            routerFactory = AbstractRouterFactory.create(routerFactoryClassName, new PortMapperApp());
         } catch (final RouterException e) {
             logger.error("Could not create router factory", e);
             return null;

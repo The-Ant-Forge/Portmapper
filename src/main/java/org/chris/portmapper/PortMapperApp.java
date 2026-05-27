@@ -19,7 +19,6 @@ package org.chris.portmapper;
 
 import java.awt.Desktop;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -250,41 +249,7 @@ public class PortMapperApp {
     }
 
     private AbstractRouterFactory createRouterFactory() throws RouterException {
-        logger.info("Creating router factory for class {}", settings.getRouterFactoryClassName());
-        final Class<AbstractRouterFactory> routerFactoryClass = getClassForName(settings.getRouterFactoryClassName());
-        final Constructor<AbstractRouterFactory> constructor = getConstructor(routerFactoryClass);
-        final AbstractRouterFactory routerFactory = createInstance(constructor);
-        logger.debug("Router factory {} created", routerFactory);
-        return routerFactory;
-    }
-
-    private AbstractRouterFactory createInstance(final Constructor<AbstractRouterFactory> constructor)
-            throws RouterException {
-        try {
-            return constructor.newInstance(this);
-        } catch (final Exception e) {
-            throw new RouterException("Could not create a router factory using constructor " + constructor, e);
-        }
-    }
-
-    private static Constructor<AbstractRouterFactory> getConstructor(final Class<AbstractRouterFactory> clazz)
-            throws RouterException {
-        try {
-            return clazz.getConstructor(PortMapperApp.class);
-        } catch (final NoSuchMethodException e) {
-            throw new RouterException("Could not find constructor of " + clazz.getName(), e);
-        } catch (final SecurityException e1) {
-            throw new RouterException("Could not find constructor of " + clazz.getName(), e1);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Class<AbstractRouterFactory> getClassForName(final String className) throws RouterException {
-        try {
-            return (Class<AbstractRouterFactory>) Class.forName(className);
-        } catch (final ClassNotFoundException e) {
-            throw new RouterException("Did not find router factory class for name " + className, e);
-        }
+        return AbstractRouterFactory.create(settings.getRouterFactoryClassName(), this);
     }
 
     public void disconnectRouter() {
