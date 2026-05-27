@@ -38,6 +38,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
@@ -108,16 +109,25 @@ public class PortMapperView {
     }
 
     private void initView() {
-        // Create and set up the window.
-        final JPanel panel = new JPanel();
-        panel.setLayout(new MigLayout("", "[fill, grow]", "[grow 50]unrelated[]unrelated[grow 50]"));
+        // Bottom half: router info + presets row, then the log panel below.
+        // The MigLayout "split 2" keeps router and presets side-by-side; the
+        // log spans the row beneath them and grows to fill the bottom-pane's
+        // share of the JSplitPane height.
+        final JPanel bottomPanel = new JPanel(new MigLayout("", "[fill, grow]", "[]unrelated[grow]"));
+        bottomPanel.add(getRouterPanel(), "grow 0, split 2");
+        bottomPanel.add(getPresetPanel(), "wrap");
+        bottomPanel.add(getLogPanel(), "grow, wrap");
 
-        panel.add(getMappingsPanel(), "wrap");
-        panel.add(getRouterPanel(), "grow 0, split 2");
-        panel.add(getPresetPanel(), "wrap");
-        panel.add(getLogPanel(), "wrap");
+        // The mappings table sits in the top half. The user can drag the
+        // divider to give either half more room — this addresses a long-
+        // standing UX gripe where a growing log shrinks the mappings table.
+        final JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, getMappingsPanel(), bottomPanel);
+        splitPane.setResizeWeight(0.5);
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setContinuousLayout(true);
+        splitPane.setBorder(BorderFactory.createEmptyBorder());
 
-        frame.setContentPane(panel);
+        frame.setContentPane(splitPane);
     }
 
     /** @return the application's main top-level window. */
