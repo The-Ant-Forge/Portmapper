@@ -30,6 +30,21 @@ import org.chris.portmapper.model.PortMappingPreset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A {@link javax.swing.JList} model backed by the persisted {@link Settings}
+ * preset list. Subscribes to {@code PROPERTY_PORT_MAPPING_PRESETS} so add /
+ * remove / replace operations on the settings list propagate to the list view
+ * without an explicit refresh.
+ *
+ * <p><b>Listener lifecycle note (code-review F8):</b> the registration with
+ * {@link Settings#addPropertyChangeListener} in the constructor is never
+ * removed. This is deliberate — {@code Settings} is a singleton owned by the
+ * {@link org.chris.portmapper.PortMapperApp} for the entire JVM lifetime, and
+ * this model lives inside the singleton {@code PortMapperView}, so the two
+ * have identical lifetimes. If a code change ever recreates either side
+ * independently this becomes a real leak; expose a {@code dispose()} method
+ * and call it from the view's cleanup at that point.
+ */
 public class PresetListModel extends AbstractListModel<PortMappingPreset> implements PropertyChangeListener {
 
     private static final long serialVersionUID = 1L;
