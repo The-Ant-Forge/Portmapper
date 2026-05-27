@@ -1,10 +1,10 @@
-name: Java CI
+name: Build
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
@@ -13,22 +13,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # Full history + tags needed: build.gradle computes PATCH as
+          # `git rev-list --count v<MAJOR>.<MINOR>.0..HEAD`. A shallow clone
+          # would see no tags and produce the wrong version.
+          fetch-depth: 0
 
-    - name: Set up JDK 21
-      uses: actions/setup-java@v5
-      with:
-        distribution: 'temurin'
-        java-version: 21
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v6
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
 
-    - name: Build with Gradle
-      run: ./gradlew build --info --warning-mode all
+      - name: Build with Gradle
+        run: ./gradlew build --info --warning-mode all
 
-    - name: Archive portmapper binary
-      uses: actions/upload-artifact@v7
-      with:
-        name: portmapper
-        path: build/libs/portmapper-*-all.jar
+      - name: Resolve project version
+        id: version
+        run: |
+          v=$(./gradlew -q properties | awk -F': ' '/^version:/ {print $2}')
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Project version: $v"
+
+      - name: Upload fat JAR
+        uses: actions/upload-artifact@v7
+        with:
+          name: portmapper-${{ steps.version.outputs.version }}
+          path: build/libs/portmapper-*-all.jar
+          if-no-files-found: error
+          retention-days: 90

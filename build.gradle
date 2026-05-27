@@ -10,8 +10,40 @@ repositories {
     mavenCentral()
 }
 
-version = '3.0.0-SNAPSHOT'
+// MAJOR.MINOR are decided manually here; PATCH is derived from git as
+// the number of commits since the matching v<MAJOR>.<MINOR>.0 tag. See
+// CLAUDE.md → Versioning for the full policy and bump rules.
+def majorMinor = '3.0'
+def patch = computePatchFromGit(majorMinor)
+version = "${majorMinor}.${patch}"
 group 'org.theantforge.portmapper'
+
+/**
+ * PATCH = git rev-list --count v<MAJOR>.<MINOR>.0..HEAD, with two safety nets:
+ *   - if the v<MAJOR>.<MINOR>.0 tag doesn't exist yet (bootstrap before first
+ *     release, or a fresh MINOR bump that hasn't been tagged), PATCH = 0
+ *   - if PATCH would exceed 99, fail the build so the maintainer must decide
+ *     whether to bump MINOR rather than silently overflow
+ *
+ * @param majorMinor the manually-set MAJOR.MINOR (e.g. "3.0")
+ * @return the computed PATCH as an int
+ */
+static int computePatchFromGit(String majorMinor) {
+    def baseTag = "v${majorMinor}.0"
+    def proc = ['git', 'rev-list', '--count', "${baseTag}..HEAD"].execute()
+    proc.waitFor()
+    if (proc.exitValue() != 0) {
+        // Tag missing or not a git checkout — fall through to PATCH 0 (bootstrap state).
+        return 0
+    }
+    def count = Integer.parseInt(proc.in.text.trim())
+    if (count > 99) {
+        throw new GradleException(
+                "PATCH ${count} exceeds 2-digit cap. Bump MINOR (currently ${majorMinor}) "
+                        + "and tag v\$NEW_MINOR.0 to reset the counter.")
+    }
+    return count
+}
 
 java {
     toolchain {
