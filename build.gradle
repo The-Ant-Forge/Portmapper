@@ -76,15 +76,15 @@ dependencies {
     implementation 'org.jupnp:org.jupnp.support:3.0.4'
     implementation 'org.bitlet:weupnp:0.1.4'
 
-    // jUPnP 3.0.4 was built against Jetty 11 (uses package layout
-    // org.eclipse.jetty.servlet.* — Jetty 12 split that into ee9/ee10 modules
-    // with different package paths). Without these deps the default Jetty
-    // transport fails at runtime with NoClassDefFoundError on either
-    // jetty/server/Handler or jetty/servlet/ServletContextHandler. jUPnP
-    // declares them as <scope>provided</scope> so they aren't pulled
-    // transitively.
-    runtimeOnly 'org.eclipse.jetty:jetty-servlet:11.0.25'
-    runtimeOnly 'org.eclipse.jetty:jetty-client:11.0.25'
+    // jUPnP 3.0.4 was built against Jetty 9.4 — confirmed by javap on
+    // org.jupnp.transport.impl.jetty.JettyServletContainer, whose
+    // registerServlet(String, javax.servlet.Servlet) signature is
+    // javax-namespaced. Jetty 10 still uses javax.servlet; Jetty 11+ migrated
+    // to jakarta.servlet (Jakarta EE 9 namespace migration). jUPnP declares
+    // Jetty as <scope>provided</scope> so we have to bring it ourselves.
+    // 9.4.57 is the last 9.4.x stable with continuing security backports.
+    runtimeOnly 'org.eclipse.jetty:jetty-servlet:9.4.57.v20241219'
+    runtimeOnly 'org.eclipse.jetty:jetty-client:9.4.57.v20241219'
 
     runtimeOnly 'commons-jxpath:commons-jxpath:1.1' // Version 1.1. required by sbbi
 
