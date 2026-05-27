@@ -38,4 +38,4 @@ Required before committing new source files — the `license` plugin (configured
 ./gradlew dependencyUpdates
 ```
 
-Useful as we work through the modernization roadmap (Cling → jUPnP, BSAF replacement, etc.).
+Filters out pre-release versions; useful for staying on top of security updates without chasing release-candidate noise.

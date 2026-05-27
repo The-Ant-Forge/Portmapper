@@ -2,6 +2,14 @@
 
 ## Status
 
+**COMPLETED in v3.0.0** (commit `f101d1f`). All BSAF surfaces below have been replaced with plain Java / Swing alternatives; the `org.jdesktop.bsaf:bsaf:1.9.2` dependency is no longer on the classpath and no `org.jdesktop.application.*` imports remain.
+
+This document is retained as a historical record of the migration plan. The actual completed commits are summarised in [TODO.md → v3.0.0 — modernization release](TODO.md#v300--modernization-release).
+
+---
+
+## Original plan (preserved verbatim below)
+
 `org.jdesktop.bsaf:bsaf:1.9.2` (last released ~2012, upstream abandoned) is currently load-bearing across the GUI. Runs clean on Java 21 LTS today without `--add-opens` flags. Replacement is risk-management for future Java versions, not an immediate need.
 
 This is **wave 2's headline task**. Defer until ready for a focused multi-hour session.
