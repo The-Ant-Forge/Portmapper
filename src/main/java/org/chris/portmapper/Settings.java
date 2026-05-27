@@ -39,6 +39,7 @@ public class Settings implements Serializable {
     private boolean useEntityEncoding;
     private String logLevel;
     private String routerFactoryClassName;
+    private boolean filterDiscoveryNoise;
 
     private transient PropertyChangeSupport propertyChangeSupport;
 
@@ -48,6 +49,7 @@ public class Settings implements Serializable {
         logLevel = Level.INFO.toString();
         presets = new ArrayList<>();
         routerFactoryClassName = JUPnPRouterFactory.class.getName();
+        filterDiscoveryNoise = true;
         propertyChangeSupport = new PropertyChangeSupport(this);
     }
 
@@ -100,7 +102,8 @@ public class Settings implements Serializable {
     @Override
     public String toString() {
         return "[Settings: presets=" + presets + ", useEntityEncoding=" + useEntityEncoding + ", logLevel=" + logLevel
-                + ", routerFactoryClassName=" + routerFactoryClassName + "]";
+                + ", routerFactoryClassName=" + routerFactoryClassName
+                + ", filterDiscoveryNoise=" + filterDiscoveryNoise + "]";
     }
 
     public boolean isUseEntityEncoding() {
@@ -133,5 +136,23 @@ public class Settings implements Serializable {
 
     public void setRouterFactoryClassName(final String routerFactoryClassName) {
         this.routerFactoryClassName = routerFactoryClassName;
+    }
+
+    /**
+     * Whether jUPnP's chatty discovery messages about non-router UPnP devices
+     * on the network (Sonos, Chromecast, NAS, smart-home gear) are suppressed
+     * from the in-app log panel and stderr. Defaults to {@code true} — most
+     * users don't want to see "Found service of wrong type" twenty times per
+     * connect against a typical home network.
+     *
+     * @return {@code true} if discovery noise is filtered; {@code false} if
+     *         every jUPnP log line is shown verbatim.
+     */
+    public boolean isFilterDiscoveryNoise() {
+        return filterDiscoveryNoise;
+    }
+
+    public void setFilterDiscoveryNoise(final boolean filterDiscoveryNoise) {
+        this.filterDiscoveryNoise = filterDiscoveryNoise;
     }
 }

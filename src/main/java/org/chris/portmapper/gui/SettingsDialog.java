@@ -28,6 +28,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
@@ -68,6 +69,7 @@ public class SettingsDialog extends JDialog {
     private static final String ACTION_CANCEL = DIALOG_NAME + ".cancel";
 
     private JCheckBox useEntityEncoding;
+    private JCheckBox filterDiscoveryNoise;
 
     private JComboBox<Level> logLevelComboBox;
     private JComboBox<String> routerFactoryClassComboBox;
@@ -90,6 +92,15 @@ public class SettingsDialog extends JDialog {
         this.setTitle(Messages.get(DIALOG_NAME + ".title"));
         this.setModal(true);
         this.pack();
+
+        // Open ~50px inside the main frame's top-left so the dialog appears
+        // visibly anchored to the app, not centred / off in the screen corner.
+        // Swing's default JDialog placement is the screen top-left which is
+        // surprising when the app window is anywhere else.
+        final JFrame mainFrame = app.getMainFrame();
+        if (mainFrame != null) {
+            this.setLocation(mainFrame.getX() + 50, mainFrame.getY() + 50);
+        }
 
         // Register an action listener that closes the window when the ESC
         // button is pressed
@@ -120,6 +131,12 @@ public class SettingsDialog extends JDialog {
 
         dialogPane.add(useEntityEncoding, "span 2, wrap");
 
+        filterDiscoveryNoise = new JCheckBox(Messages.get("settings_dialog.filter_discovery_noise.text"),
+                settings.isFilterDiscoveryNoise());
+        filterDiscoveryNoise.setName("settings_dialog.filter_discovery_noise");
+
+        dialogPane.add(filterDiscoveryNoise, "span 2, wrap");
+
         dialogPane.add(createLabel("settings_dialog.log_level"));
 
         logLevelComboBox = new JComboBox<>(new Vector<>(AVAILABLE_LOG_LEVELS));
@@ -146,6 +163,7 @@ public class SettingsDialog extends JDialog {
     public void save() {
         final Settings settings = app.getSettings();
         settings.setUseEntityEncoding(useEntityEncoding.isSelected());
+        settings.setFilterDiscoveryNoise(filterDiscoveryNoise.isSelected());
         settings.setLogLevel(((Level) logLevelComboBox.getSelectedItem()).toString());
         settings.setRouterFactoryClassName(routerFactoryClassComboBox.getSelectedItem().toString());
 

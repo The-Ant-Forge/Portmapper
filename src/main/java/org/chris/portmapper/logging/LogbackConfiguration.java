@@ -18,6 +18,7 @@
 package org.chris.portmapper.logging;
 
 import java.io.OutputStream;
+import java.util.function.BooleanSupplier;
 
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +46,23 @@ public class LogbackConfiguration {
         final Encoder<ILoggingEvent> encoder = createPatternLayoutEncoder(PATTERN_LAYOUT);
         final OutputStreamAppender<ILoggingEvent> appender = createAppender(logMessageOutputStream, encoder);
         configureLogger(appender);
+    }
+
+    /**
+     * Install the {@link DiscoveryNoiseFilter} on the shared {@link LoggerContext}.
+     * Filters every log event globally (turbo-filter scope), but the filter itself
+     * checks {@code enabled.getAsBoolean()} on every event so the
+     * {@link org.chris.portmapper.gui.SettingsDialog} toggle takes effect
+     * immediately without re-registering.
+     *
+     * @param enabled supplier wired to {@code Settings.isFilterDiscoveryNoise()}.
+     */
+    @SuppressWarnings("java:S4792") // Logger configuration is ok
+    public void installDiscoveryNoiseFilter(final BooleanSupplier enabled) {
+        final DiscoveryNoiseFilter filter = new DiscoveryNoiseFilter(enabled);
+        filter.setContext(loggerContext);
+        filter.start();
+        loggerContext.addTurboFilter(filter);
     }
 
     @SuppressWarnings("java:S4792") // Logger configuration is ok

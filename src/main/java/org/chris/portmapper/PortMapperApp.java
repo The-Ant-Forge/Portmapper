@@ -78,6 +78,10 @@ public class PortMapperApp {
         logbackConfig.registerOutputStream(logMessageOutputStream);
         initStorage();
         loadSettings();
+        // Discovery-noise filter is installed after settings load so the supplier
+        // can read the (possibly user-overridden) flag, and it's a TurboFilter so
+        // toggling the flag at runtime via SettingsDialog takes effect immediately.
+        logbackConfig.installDiscoveryNoiseFilter(() -> settings.isFilterDiscoveryNoise());
         applyLookAndFeel();
         SwingUtilities.invokeLater(this::launchGui);
         Runtime.getRuntime().addShutdownHook(new Thread(this::onShutdown, "portmapper-shutdown"));
