@@ -259,6 +259,11 @@ public class PortMapperView {
         return mappingsPanel;
     }
 
+    /**
+     * Refresh the internal and external IP labels. The SOAP/HTTP calls to the
+     * router run on a {@link RouterWorker} so the EDT stays responsive; only
+     * label updates happen on the EDT.
+     */
     public void updateAddresses() {
         final IRouter router = app.getRouter();
         if (router == null) {
@@ -268,13 +273,28 @@ public class PortMapperView {
         }
         externalIPLabel.setText(Messages.get("mainFrame.router.updating"));
         internalIPLabel.setText(Messages.get("mainFrame.router.updating"));
-        internalIPLabel.setText(router.getInternalHostName());
-        try {
-            externalIPLabel.setText(router.getExternalIPAddress());
-        } catch (final RouterException e) {
-            externalIPLabel.setText("");
-            logger.error("Did not get external IP address", e);
-        }
+        new RouterWorker<Addresses>("get router addresses") {
+            @Override
+            protected Addresses doInBackground() throws RouterException {
+                return new Addresses(router.getInternalHostName(), router.getExternalIPAddress());
+            }
+
+            @Override
+            protected void onSuccess(final Addresses addresses) {
+                internalIPLabel.setText(addresses.internal());
+                externalIPLabel.setText(addresses.external() != null ? addresses.external() : "");
+            }
+
+            @Override
+            protected void onFailure(final Throwable cause) {
+                super.onFailure(cause);
+                externalIPLabel.setText("");
+            }
+        }.execute();
+    }
+
+    /** A pair of router-reported addresses. */
+    private record Addresses(String internal, String external) {
     }
 
     /**
@@ -313,34 +333,59 @@ public class PortMapperView {
         this.updatePortMappings();
     }
 
+    /**
+     * Remove the currently-selected port mappings. The per-mapping
+     * {@code removeMapping} SOAP calls happen off the EDT in a
+     * {@link RouterWorker}; the table refresh fires from {@code done()}.
+     */
     public void removeMappings() {
         final Collection<PortMapping> selectedMappings = this.getSelectedPortMappings();
-        for (final PortMapping mapping : selectedMappings) {
-            logger.info("Removing mapping {}", mapping);
-            try {
-                app.getRouter().removeMapping(mapping);
-            } catch (final RouterException e) {
-                logger.error("Could not remove port mapping " + mapping, e);
-                break;
+        if (selectedMappings.isEmpty()) {
+            return;
+        }
+        final IRouter router = app.getRouter();
+        new RouterWorker<Void>("remove " + selectedMappings.size() + " port mapping(s)") {
+            @Override
+            protected Void doInBackground() throws RouterException {
+                for (final PortMapping mapping : selectedMappings) {
+                    logger.info("Removing mapping {}", mapping);
+                    router.removeMapping(mapping);
+                    logger.info("Mapping was removed successfully: {}", mapping);
+                }
+                return null;
             }
-            logger.info("Mapping was removed successfully: {}", mapping);
-        }
-        if (!selectedMappings.isEmpty()) {
-            updatePortMappings();
-        }
+
+            @Override
+            protected void onSuccess(final Void v) {
+                updatePortMappings();
+            }
+
+            @Override
+            protected void onFailure(final Throwable cause) {
+                super.onFailure(cause);
+                // Refresh the table anyway — some mappings may have been removed before the failure.
+                updatePortMappings();
+            }
+        }.execute();
     }
 
+    /**
+     * Log router info to the in-app log panel. The {@code logRouterInfo} call
+     * itself blocks on SOAP, so it runs off the EDT in a {@link RouterWorker}.
+     */
     public void displayRouterInfo() {
         final IRouter router = app.getRouter();
         if (router == null) {
             logger.warn("Not connected to router, could not get router info");
             return;
         }
-        try {
-            router.logRouterInfo();
-        } catch (final RouterException e) {
-            logger.error("Could not get router info", e);
-        }
+        new RouterWorker<Void>("get router info") {
+            @Override
+            protected Void doInBackground() throws RouterException {
+                router.logRouterInfo();
+                return null;
+            }
+        }.execute();
     }
 
     public void showAboutDialog() {
@@ -355,19 +400,29 @@ public class PortMapperView {
         this.copyTextToClipboard(this.externalIPLabel.getText());
     }
 
+    /**
+     * Refresh the port-mappings table. The enumeration loop runs against the
+     * router (potentially many SOAP calls) so it goes off the EDT in a
+     * {@link RouterWorker}; only the table-model update happens on the EDT.
+     */
     public void updatePortMappings() {
         final IRouter router = app.getRouter();
         if (router == null) {
             this.tableModel.setMappings(Collections.<PortMapping> emptyList());
             return;
         }
-        try {
-            final Collection<PortMapping> mappings = router.getPortMappings();
-            logger.info("Found {} mappings", mappings.size());
-            this.tableModel.setMappings(mappings);
-        } catch (final RouterException e) {
-            logger.error("Could not get port mappings", e);
-        }
+        new RouterWorker<Collection<PortMapping>>("list port mappings") {
+            @Override
+            protected Collection<PortMapping> doInBackground() throws RouterException {
+                return router.getPortMappings();
+            }
+
+            @Override
+            protected void onSuccess(final Collection<PortMapping> mappings) {
+                logger.info("Found {} mappings", mappings.size());
+                tableModel.setMappings(mappings);
+            }
+        }.execute();
     }
 
     public void addPresetMapping() {
@@ -451,13 +506,15 @@ public class PortMapperView {
     }
 
     /**
-     * Async router-connect work. {@code doInBackground} runs off the EDT and is
-     * limited to the actual blocking call; the EDT-only Swing updates happen
-     * in {@code done()}. Replaces the previous BSAF {@code Task} subclass which
-     * incorrectly called Swing-touching methods from the worker thread (BSAF's
-     * Task wrappers presumably masked the resulting race conditions).
+     * Async router-connect work. {@code doInBackground} runs the blocking
+     * discovery off the EDT; {@code done()} (on the EDT) shows the
+     * multi-router-selection {@link JOptionPane} when necessary and then
+     * assigns the connected router. The pre-modernisation code put the
+     * selection prompt inside the worker-thread call to
+     * {@code app.connectRouter()}, which violated Swing's EDT contract — the
+     * split here is what fixes review finding F3.
      */
-    private class ConnectTask extends SwingWorker<Void, Void> {
+    private class ConnectTask extends SwingWorker<Collection<IRouter>, Void> {
 
         private final PortMapperApp app;
 
@@ -466,25 +523,87 @@ public class PortMapperView {
         }
 
         @Override
-        protected Void doInBackground() throws Exception {
-            logger.trace("Connecting to router...");
-            app.connectRouter();
-            return null;
+        protected Collection<IRouter> doInBackground() throws Exception {
+            logger.trace("Discovering routers...");
+            return app.discoverRouters();
         }
 
         @Override
         protected void done() {
+            final Collection<IRouter> found;
             try {
-                get();
-                logger.trace("Updating addresses...");
-                updateAddresses();
-                logger.trace("Updating port mappings...");
-                updatePortMappings();
-                logger.trace("done");
+                found = get();
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            } catch (final ExecutionException e) {
+                logger.warn("Could not connect to router: {}", e.getCause().getMessage(), e.getCause());
+                return;
+            }
+            if (found.isEmpty()) {
+                return; // Already-connected branch; nothing to do.
+            }
+            final IRouter selected = found.size() == 1 ? found.iterator().next() : promptForRouter(found);
+            if (selected == null) {
+                logger.info("No router selected.");
+                return;
+            }
+            app.setRouter(selected);
+            logger.trace("Updating addresses...");
+            updateAddresses();
+            logger.trace("Updating port mappings...");
+            updatePortMappings();
+            logger.trace("done");
+        }
+
+        private IRouter promptForRouter(final Collection<IRouter> candidates) {
+            logger.info("Found more than one router (count: {}): ask user.", candidates.size());
+            return (IRouter) JOptionPane.showInputDialog(getFrame(),
+                    Messages.get("messages.select_router.message"),
+                    Messages.get("messages.select_router.title"), JOptionPane.QUESTION_MESSAGE, null,
+                    candidates.toArray(), null);
+        }
+    }
+
+    /**
+     * Base class for any router-call wrapped in a {@link SwingWorker}: the
+     * blocking work lives in {@link #doInBackground()} (off-EDT); the success
+     * and failure handlers ({@link #onSuccess}, {@link #onFailure}) run on the
+     * EDT inside {@link #done()}. Centralises the exception unwrapping so each
+     * caller doesn't repeat the {@code InterruptedException}/{@code ExecutionException}
+     * boilerplate.
+     *
+     * @param <T> the type of result produced by the background work.
+     */
+    private abstract class RouterWorker<T> extends SwingWorker<T, Void> {
+        private final String operationDescription;
+
+        RouterWorker(final String operationDescription) {
+            this.operationDescription = operationDescription;
+        }
+
+        /** Off-EDT blocking work. Override and return the result. */
+        @Override
+        protected abstract T doInBackground() throws RouterException;
+
+        /** EDT-only success handler. Default is a no-op. */
+        protected void onSuccess(final T result) {
+            // default: nothing
+        }
+
+        /** EDT-only failure handler. Default logs at WARN with the operation description. */
+        protected void onFailure(final Throwable cause) {
+            logger.warn("Router operation failed ({}): {}", operationDescription, cause.getMessage(), cause);
+        }
+
+        @Override
+        protected final void done() {
+            try {
+                onSuccess(get());
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
             } catch (final ExecutionException e) {
-                logger.warn("Could not connect to router: {}", e.getCause().getMessage(), e.getCause());
+                onFailure(e.getCause());
             }
         }
     }

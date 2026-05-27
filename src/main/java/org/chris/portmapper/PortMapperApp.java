@@ -29,7 +29,6 @@ import java.util.List;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
@@ -212,59 +211,41 @@ public class PortMapperApp {
     }
 
     /**
-     * Find and connect to a router. On the EDT-respecting code path (a button click)
-     * the worker thread is provided by {@link PortMapperView}'s {@code ConnectTask};
-     * the {@link JOptionPane#showInputDialog} call at the bottom (only used when
-     * multiple routers are discovered) technically wants the EDT - latent issue
-     * inherited from the pre-modernisation code, not addressed in this step.
+     * Discover candidate routers on the network. This is the off-EDT half of
+     * the connect flow — it runs the router-factory's blocking discovery and
+     * returns whatever it finds. Selecting one and assigning it is the EDT
+     * half ({@link #setRouter(IRouter)}); callers are responsible for the hand-off.
      *
-     * @throws RouterException if the router-factory can't be instantiated or the
-     *         discovery step fails.
+     * @return every router the factory found.
+     * @throws RouterException if the factory can't be instantiated, discovery
+     *         fails, or no router is found.
      */
-    public void connectRouter() throws RouterException {
+    public Collection<IRouter> discoverRouters() throws RouterException {
         if (this.router != null) {
             logger.warn("Already connected to router. Cannot create a second connection.");
-            return;
+            return Collections.emptyList();
         }
 
-        final AbstractRouterFactory routerFactory;
-        try {
-            routerFactory = createRouterFactory();
-        } catch (final RouterException e) {
-            logger.error("Could not create router factory: {}", e.getMessage(), e);
-            return;
-        }
+        final AbstractRouterFactory routerFactory = createRouterFactory();
         logger.info("Searching for routers...");
 
         final Collection<IRouter> foundRouters = routerFactory.findRouters();
-
-        // No routers found
         if (foundRouters == null || foundRouters.isEmpty()) {
             throw new RouterException("Did not find a router");
         }
+        return foundRouters;
+    }
 
-        // One router found: use it.
-        if (foundRouters.size() == 1) {
-            router = foundRouters.iterator().next();
-            logger.info("Connected to router '{}'", router.getName());
-            this.getView().fireConnectionStateChange();
-            return;
-        }
-
-        // More than one router found: ask user.
-        logger.info("Found more than one router (count: {}): ask user.", foundRouters.size());
-
-        final IRouter selectedRouter = (IRouter) JOptionPane.showInputDialog(this.getView().getFrame(),
-                Messages.get("messages.select_router.message"),
-                Messages.get("messages.select_router.title"), JOptionPane.QUESTION_MESSAGE, null,
-                foundRouters.toArray(), null);
-
-        if (selectedRouter == null) {
-            logger.info("No router selected.");
-            return;
-        }
-
+    /**
+     * Assign the connected router. EDT-only — fires the
+     * {@code PROPERTY_ROUTER_CONNECTED} change which propagates to bound
+     * actions in {@link PortMapperView}.
+     *
+     * @param selectedRouter the router to connect to.
+     */
+    public void setRouter(final IRouter selectedRouter) {
         this.router = selectedRouter;
+        logger.info("Connected to router '{}'", router.getName());
         this.getView().fireConnectionStateChange();
     }
 
