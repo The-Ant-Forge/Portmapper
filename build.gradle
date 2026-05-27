@@ -76,6 +76,12 @@ dependencies {
     implementation 'org.jupnp:org.jupnp.support:3.0.4'
     implementation 'org.bitlet:weupnp:0.1.4'
 
+    // jUPnP 3.x defaults to a Jetty 12 / ee10-servlet transport but declares those
+    // deps as <scope>provided</scope>, so they're not pulled transitively. Without
+    // them, JettyTransportConfiguration fails at runtime with NoClassDefFoundError.
+    runtimeOnly 'org.eclipse.jetty.ee10:jetty-ee10-servlet:12.0.16'
+    runtimeOnly 'org.eclipse.jetty:jetty-client:12.0.16'
+
     runtimeOnly 'commons-jxpath:commons-jxpath:1.1' // Version 1.1. required by sbbi
 
     testImplementation platform('org.junit:junit-bom:6.1.0')
