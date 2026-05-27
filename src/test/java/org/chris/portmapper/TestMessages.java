@@ -51,8 +51,8 @@ class TestMessages {
 
     @Test
     void getResolvesNestedReferencesFromAboutDialog() {
-        // about_dialog.upnplib_label.toolTipText contains three ${...} refs
-        final String result = Messages.get("about_dialog.upnplib_label.toolTipText");
+        // about_dialog.jupnp_label.toolTipText contains three ${...} refs
+        final String result = Messages.get("about_dialog.jupnp_label.toolTipText");
         assertFalse(result.contains("${"), () -> "Unresolved placeholder: " + result);
     }
 

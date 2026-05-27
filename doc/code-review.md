@@ -13,10 +13,7 @@ any non-trivial change. Items are ordered roughly from "always check" to
    not referenced by the code (drop entirely) and anything referenced
    by only a handful of call sites where inlining or vendoring a small
    helper would shrink the dep footprint. Also CVE exposure on
-   transitive deps. Currently flagged for utilization review: `args4j`
-   is touched only by `CommandLineArguments` (candidate for inlining
-   or swapping to picocli); `commons-jxpath:1.1` is pinned only for
-   the SBBI backend and would be droppable if SBBI is dropped.
+   transitive deps.
 
 3. **Duplication** — repeated UPnP error decoding, duplicated dialog
    wiring across `AboutDialog` / `SettingsDialog` / `EditPresetDialog`,
@@ -24,9 +21,9 @@ any non-trivial change. Items are ordered roughly from "always check" to
    `AbstractRouter` / `AbstractRouterFactory`.
 
 4. **Naming & consistency** — package names match the backend they wrap
-   (`jupnp`, `sbbi`, `weupnp`, `dummy`); stale `Cling*` references after
-   the rename; action-name string constants in `PortMapperView` line up
-   with the `.properties` keys.
+   (`jupnp`, `weupnp`, `dummy`); stale `Cling*` / `SBBI*` references
+   after backend changes; action-name string constants in
+   `PortMapperView` line up with the `.properties` keys.
 
 5. **Error handling** — `RouterException` is the user-facing failure
    contract for every `IRouter` method. Verify it is thrown (not
@@ -48,12 +45,13 @@ any non-trivial change. Items are ordered roughly from "always check" to
    for `PortMapping` / `Protocol` / preset value-objects; flag PoJos
    that should be records.
 
-8. **Test gaps** — current coverage is thin: `TestPortMappingExtractor`
-   (SBBI extractor), `TestCommandLineArguments` (CLI parsing),
-   `TestDummyRouter` (IRouter contract via DummyRouter). Any new code
-   path on the IRouter contract, CLI arg surface, or extractor logic
-   should grow a test. Use JUnit 5 + Mockito with `MockitoExtension`,
-   mirror the package path under `src/test/java/`.
+8. **Test gaps** — current coverage is moderate: `TestCommandLineArguments`
+   (CLI parsing), `TestDummyRouter` (IRouter contract via DummyRouter),
+   `TestSettingsStorage` (XMLEncoder roundtrip + atomic-write),
+   `TestActions`, `TestMessages`. Any new code path on the IRouter
+   contract, CLI arg surface, or extractor logic should grow a test.
+   Use JUnit 5 + Mockito with `MockitoExtension`, mirror the package
+   path under `src/test/java/`.
 
 9. **Documentation drift** — `CLAUDE.md`, `doc/bsaf-plan.md`, javadoc
    on `IRouter` / `AbstractRouterFactory`, and bundled `.properties`

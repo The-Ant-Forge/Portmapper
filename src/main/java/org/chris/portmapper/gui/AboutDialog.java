@@ -56,9 +56,8 @@ public class AboutDialog extends JDialog {
         pane.add(createLabel("about_dialog.label2"), "wrap");
         pane.add(createLabel("about_dialog.label3"), "wrap");
         pane.add(createLabel("about_dialog.label4"), "wrap");
-        pane.add(new URLLabel("about_dialog.upnplib_label"), "split 3");
-        pane.add(new URLLabel("about_dialog.weupnp_label"), "");
-        pane.add(new URLLabel("about_dialog.jupnp_label"), "wrap");
+        pane.add(new URLLabel("about_dialog.jupnp_label"), "split 2");
+        pane.add(new URLLabel("about_dialog.weupnp_label"), "wrap");
         pane.add(new URLLabel("about_dialog.slf4j_label"), "split 3");
         pane.add(new URLLabel("about_dialog.logback_label"), "");
         pane.add(new URLLabel("about_dialog.miglayout_label"), "wrap unrelated");

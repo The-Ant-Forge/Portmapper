@@ -25,8 +25,8 @@ All commands use the Gradle wrapper. On Windows shells use `.\gradlew.bat`; ever
 | Full build + fat JAR | `./gradlew build` (shadowJar is wired into `build`) |
 | Run the GUI from sources | `./gradlew run` |
 | Run all tests | `./gradlew test` |
-| Run a single test class | `./gradlew test --tests org.chris.portmapper.router.sbbi.TestPortMappingExtractor` |
-| Run one test method | `./gradlew test --tests '*TestPortMappingExtractor.<methodName>'` |
+| Run a single test class | `./gradlew test --tests org.chris.portmapper.router.dummy.TestDummyRouter` |
+| Run one test method | `./gradlew test --tests '*TestDummyRouter.<methodName>'` |
 | Apply license headers to new files | `./gradlew licenseFormat` (required — see below) |
 | Check dependency updates | `./gradlew dependencyUpdates` |
 | Build against a non-default JDK | `./gradlew build -PjavaVersion=24` (default is 21; CI only tests 21) |
@@ -38,7 +38,6 @@ Built artifact location: `build/libs/portmapper-<version>-all.jar`. The end-user
 - **`-Werror` + `-Xlint:all,-classfile` + `javadoc.failOnError = true`** ([build.gradle](build.gradle)). A missing `@param`, unused import, or any javac warning fails the build. Keep new code lint-clean and javadoc-clean. `-classfile` is disabled to silence jUPnP's OSGi-annotation metadata warnings; that's the only category we suppress.
 - **License header enforcement** — the Hierynomus license plugin checks every source file against `gradle/license-header.txt`. Run `./gradlew licenseFormat` after adding new files or `build` will fail.
 - **`processResources` rewrites property filenames at build time**: `*_en.properties` becomes the default (no suffix), and `*_zh_CN.properties` becomes `*_zh.properties`. The token `@VERSION_NUMBER@` inside resources is substituted with `project.version`. If you reference a property bundle by name, remember the source filename ≠ the runtime filename for English/Chinese.
-- **Non-standard repo in build.gradle**: `lib/` is a `flatDir` repository hosting the bundled `sbbi-upnplib-1.0.4.jar`. Don't remove without replacing the SBBI backend (slated for a lifecycle decision in wave 2).
 - **Java 21 LTS is the language baseline.** All Java 21 features (records, pattern matching, sealed classes, virtual threads, etc.) are fair game.
 - **Norton TLS interception fix is required on this dev machine.** `~/.gradle/gradle.properties` contains `org.gradle.jvmargs=-Djavax.net.ssl.trustStoreType=Windows-ROOT` to make Gradle trust Norton's local root CA when resolving Maven Central. Without it, all `mavenCentral()` lookups fail with PKIX errors. See the `windows-norton-tls-mitm` memory entry for full context.
 
@@ -58,18 +57,17 @@ PortMapperStarter.main
 
 ### Router abstraction (the main extension surface)
 
-[IRouter](src/main/java/org/chris/portmapper/router/IRouter.java) is the SPI. Four implementations live under `org.chris.portmapper.router.*`:
+[IRouter](src/main/java/org/chris/portmapper/router/IRouter.java) is the SPI. Three implementations live under `org.chris.portmapper.router.*`:
 
 | Package | Factory class | Purpose |
 |---------|---------------|---------|
-| `jupnp/` | `JUPnPRouterFactory` | **Default**. Uses jUPnP (active fork of the abandoned 4thline Cling). Single-router only. |
-| `weupnp/` | `WeUPnPRouterFactory` | Supports `-Dportmapper.locationUrl=...` for manual router URL. Currently the only backend known to work against the maintainer's specific router. |
-| `sbbi/` | `SBBIRouterFactory` | Legacy SBBI UPnP library (2008-vintage vendored jar). |
+| `jupnp/` | `JUPnPRouterFactory` | **Default**. Uses jUPnP 3.0.4 (active fork of the abandoned 4thline Cling). Requires Jetty 9.4 on the runtime classpath — see [build.gradle](build.gradle) for the rationale. Single-router only. |
+| `weupnp/` | `WeUPnPRouterFactory` | Supports `-Dportmapper.locationUrl=...` for manual router URL. Kept as a fallback because some routers respond better to weupnp's discovery than jUPnP's. |
 | `dummy/` | `DummyRouterFactory` | Testing only; do not ship as default. |
 
 Factories are resolved by **fully-qualified class name string** via reflection — not `ServiceLoader`. The class name comes from either the `-lib` CLI flag or `Settings.getRouterFactoryClassName()`. The constructor contract is `public RouterFactory(PortMapperApp app)`. To add a new UPnP library: subclass `AbstractRouterFactory`, implement `findRoutersInternal()` and `connect(locationUrl)`, expose the `(PortMapperApp)` constructor, and register it in the Settings dialog dropdown.
 
-`Settings.getRouterFactoryClassName()` carries a one-line migration shim that rewrites the pre-rename FQCN (`org.chris.portmapper.router.cling.ClingRouterFactory`) to the new jUPnP one on read, so legacy `settings.xml` files self-heal.
+`Settings.getRouterFactoryClassName()` carries migration shims that rewrite obsolete factory FQCNs on read so legacy `settings.xml` files self-heal on the next save: the pre-rename Cling FQCN and the dropped SBBI FQCN both rewrite to jUPnP.
 
 ### GUI framework
 
@@ -81,11 +79,13 @@ SLF4J + Logback. `PortMapperStarter` installs `SLF4JBridgeHandler` so `java.util
 
 ## Tests
 
-JUnit 5 (junit-bom:6.1.0) + Mockito 5.23 via `MockitoExtension` (strictness LENIENT to preserve legacy stubbing semantics). Three test classes exist:
+JUnit 5 (junit-bom:6.1.0) + Mockito 5.23 via `MockitoExtension` (strictness LENIENT to preserve legacy stubbing semantics). Test classes:
 
-- `org.chris.portmapper.router.sbbi.TestPortMappingExtractor` — SBBI extractor unit tests
-- `org.chris.portmapper.TestCommandLineArguments` — args4j CLI parsing (17 tests)
+- `org.chris.portmapper.TestCommandLineArguments` — picocli CLI parsing (17 tests)
 - `org.chris.portmapper.router.dummy.TestDummyRouter` — IRouter contract via DummyRouter (11 tests)
+- `org.chris.portmapper.TestMessages` — ResourceBundle + `${...}` placeholder resolution
+- `org.chris.portmapper.TestSettingsStorage` — XMLEncoder/XMLDecoder roundtrip + atomic-write
+- `org.chris.portmapper.TestActions` — `Actions.create` / `createBound` helper
 
 Tests run with `-enableassertions` and heap-dump-on-OOM. When adding tests, mirror the `src/main/java/org/chris/portmapper/...` package path under `src/test/java/`.
 

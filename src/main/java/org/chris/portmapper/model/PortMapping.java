@@ -17,11 +17,6 @@
  */
 package org.chris.portmapper.model;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import net.sbbi.upnp.messages.ActionResponse;
-
 /**
  * Represents a port mapping / forwarding on a router. Transient data carrier
  * (not persisted to {@code settings.xml}); only the user-defined
@@ -46,56 +41,18 @@ public record PortMapping(
         boolean enabled,
         long leaseDuration) {
 
-    public static final String MAPPING_ENTRY_LEASE_DURATION = "NewLeaseDuration";
-    public static final String MAPPING_ENTRY_ENABLED = "NewEnabled";
-    public static final String MAPPING_ENTRY_REMOTE_HOST = "NewRemoteHost";
-    public static final String MAPPING_ENTRY_INTERNAL_CLIENT = "NewInternalClient";
-    public static final String MAPPING_ENTRY_PORT_MAPPING_DESCRIPTION = "NewPortMappingDescription";
-    public static final String MAPPING_ENTRY_PROTOCOL = "NewProtocol";
-    public static final String MAPPING_ENTRY_INTERNAL_PORT = "NewInternalPort";
-    public static final String MAPPING_ENTRY_EXTERNAL_PORT = "NewExternalPort";
-
     private static final long DEFAULT_LEASE_DURATION = 0;
 
     /**
      * Convenience constructor that defaults {@code enabled=true} and the lease
      * duration to {@value #DEFAULT_LEASE_DURATION}. Most callers in the codebase
      * use this form; the canonical 8-arg constructor is for callers that need to
-     * encode the full SBBI/UPnP-IGD response fields.
+     * encode the full UPnP-IGD response fields.
      */
     public PortMapping(final Protocol protocol, final String remoteHost, final int externalPort,
             final String internalClient, final int internalPort, final String description) {
         this(protocol, remoteHost, externalPort, internalClient, internalPort, description, true,
                 DEFAULT_LEASE_DURATION);
-    }
-
-    /**
-     * Build a {@link PortMapping} from an SBBI {@link ActionResponse}. The SBBI
-     * library returns mapping data as an untyped name/value bag keyed by the
-     * {@code MAPPING_ENTRY_*} constants.
-     *
-     * @param response the action response returned by the SBBI library.
-     * @return a populated {@code PortMapping}.
-     */
-    public static PortMapping create(final ActionResponse response) {
-        final Map<String, String> values = new HashMap<>();
-        for (final Object argObj : response.getOutActionArgumentNames()) {
-            final String argName = (String) argObj;
-            values.put(argName, response.getOutActionArgumentValue(argName));
-        }
-
-        final int externalPort = Integer.parseInt(values.get(MAPPING_ENTRY_EXTERNAL_PORT));
-        final int internalPort = Integer.parseInt(values.get(MAPPING_ENTRY_INTERNAL_PORT));
-        final String protocolString = values.get(MAPPING_ENTRY_PROTOCOL);
-        final Protocol protocol = "TCP".equalsIgnoreCase(protocolString) ? Protocol.TCP : Protocol.UDP;
-        final String description = values.get(MAPPING_ENTRY_PORT_MAPPING_DESCRIPTION);
-        final String internalClient = values.get(MAPPING_ENTRY_INTERNAL_CLIENT);
-        final String remoteHost = values.get(MAPPING_ENTRY_REMOTE_HOST);
-        final String enabledString = values.get(MAPPING_ENTRY_ENABLED);
-        final boolean enabled = "1".equals(enabledString);
-        final long leaseDuration = Long.parseLong(values.get(MAPPING_ENTRY_LEASE_DURATION));
-        return new PortMapping(protocol, remoteHost, externalPort, internalClient, internalPort, description,
-                enabled, leaseDuration);
     }
 
     /**

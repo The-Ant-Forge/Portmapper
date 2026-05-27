@@ -120,10 +120,12 @@ public class Settings implements Serializable {
     }
 
     public String getRouterFactoryClassName() {
-        // Migration shim: settings.xml files written before the cling -> jupnp
-        // package/class rename hold the old FQCN. Rewrite on first read so the
-        // next save self-heals the file.
-        if ("org.chris.portmapper.router.cling.ClingRouterFactory".equals(routerFactoryClassName)) {
+        // Migration shim: rewrite obsolete factory FQCNs on first read so the
+        // next save self-heals the file. Covers:
+        //   - org.chris.portmapper.router.cling.ClingRouterFactory (pre-jUPnP)
+        //   - org.chris.portmapper.router.sbbi.SBBIRouterFactory (SBBI dropped)
+        if ("org.chris.portmapper.router.cling.ClingRouterFactory".equals(routerFactoryClassName)
+                || "org.chris.portmapper.router.sbbi.SBBIRouterFactory".equals(routerFactoryClassName)) {
             routerFactoryClassName = JUPnPRouterFactory.class.getName();
         }
         return routerFactoryClassName;

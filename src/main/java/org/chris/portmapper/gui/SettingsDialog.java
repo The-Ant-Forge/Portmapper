@@ -39,7 +39,6 @@ import org.chris.portmapper.PortMapperApp;
 import org.chris.portmapper.Settings;
 import org.chris.portmapper.router.dummy.DummyRouterFactory;
 import org.chris.portmapper.router.jupnp.JUPnPRouterFactory;
-import org.chris.portmapper.router.sbbi.SBBIRouterFactory;
 import org.chris.portmapper.router.weupnp.WeUPnPRouterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +54,7 @@ import net.miginfocom.swing.MigLayout;
 public class SettingsDialog extends JDialog {
 
     private static final List<String> AVAILABLE_ROUTER_FACTORIES = Arrays.asList(JUPnPRouterFactory.class.getName(),
-            SBBIRouterFactory.class.getName(), WeUPnPRouterFactory.class.getName(), DummyRouterFactory.class.getName());
+            WeUPnPRouterFactory.class.getName(), DummyRouterFactory.class.getName());
 
     private static final List<Level> AVAILABLE_LOG_LEVELS = Arrays.asList(Level.TRACE, Level.DEBUG,
             Level.INFO, Level.WARN, Level.ERROR, Level.OFF);

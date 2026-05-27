@@ -31,12 +31,11 @@ Full plan: [bsaf-plan.md](bsaf-plan.md). Seven steps total.
 
 ## Wave 2 — other candidates (post-BSAF)
 
-- **SBBI lifecycle decision.** Vendored `lib/sbbi-upnplib-1.0.4.jar` from 2008. Options: drop, keep, replace. If dropped, `commons-jxpath:1.1` (pinned only for SBBI compat) can come out too. **Current decision: keep**, revisit after jUPnP coverage is better understood.
-- **weupnp evaluation.** `org.bitlet:weupnp:0.1.4` from 2017, abandoned. **Important**: weupnp is currently the only backend known to work against this maintainer's specific router; do **not** drop until jUPnP can reliably connect to that router and supports the equivalent of `-Dportmapper.locationUrl`. **Current decision: keep.**
+- **weupnp evaluation.** `org.bitlet:weupnp:0.1.4` from 2017, abandoned. Kept as a fallback because some routers respond better to weupnp's discovery than jUPnP's. **Current decision: keep.**
 
 ## Backlog
 
-- **Modern Java idioms — done** (commits `38e5cdc`, `e9f7238`). All three model types (`PortMapping`, `SinglePortMapping`, `PortMappingPreset`) are records; table models use arrow-syntax switch expressions; `SBBIRouter.removePortMapping` uses `Protocol.getName()` instead of a TCP/UDP ternary; light `var` sweep applied to short-lived Swing builder locals in `EditPresetDialog` (value-type declarations kept explicit on purpose). **Not done — deliberately deferred**:
+- **Modern Java idioms — done** (commits `38e5cdc`, `e9f7238`). All three model types (`PortMapping`, `SinglePortMapping`, `PortMappingPreset`) are records; table models use arrow-syntax switch expressions; light `var` sweep applied to short-lived Swing builder locals in `EditPresetDialog` (value-type declarations kept explicit on purpose). **Not done — deliberately deferred**:
   - Sealed interface for `IRouter`. Skipped because the factory-by-FQCN-reflection pattern in `Settings` means subclasses aren't strictly enumerable. Would only make sense if we dropped dynamic factory loading.
   - Pattern matching on `instanceof`. Codebase has near-zero downcasts; the readability win is marginal.
   - Broader `var` sweep beyond Swing builders. Cosmetic; can land any time but provides little value over the targeted pass already done.
@@ -47,6 +46,7 @@ Full plan: [bsaf-plan.md](bsaf-plan.md). Seven steps total.
 
 ## Backlog — completed and decided
 
+- ✅ **SBBI backend dropped.** The vendored `sbbi-upnplib-1.0.4.jar` (2008-vintage SuperBonBon Industries) rejects every modern router during discovery because it hardcodes `UDA version 1.0` and modern IGDs advertise `1.1`. Investigated the triplea-game fork (Debian-packaged `1.0.4+triplea-2`) but it's not published to Maven Central and the version check sits in `RootDevice.java` rather than the patched files. Dropped: `lib/sbbi-upnplib-1.0.4.jar`, `:sbbi-upnplib:1.0.4` impl dep, `commons-jxpath:1.1` runtime dep (only there for SBBI), the `flatDir { dirs 'lib' }` repository declaration, the `sbbi/` package, the `SBBI UPnP lib` entry in the Settings dropdown and About dialog, and the `MAPPING_ENTRY_*` constants + `PortMapping.create(ActionResponse)` factory. `Settings.getRouterFactoryClassName()` migration shim rewrites the dropped SBBI FQCN to jUPnP on first read, so any saved `settings.xml` self-heals.
 - ✅ **args4j → picocli** (commit `c131d28`). `args4j:2.37` retired (end-of-life since 2018); replaced with `info.picocli:picocli:4.7.7`. CLI contract preserved; `TestCommandLineArguments` (17 tests) passes unchanged.
 - ❌ **offbynull/portmapper as additional UPnP backend** — investigated, **skipped**. Library (`com.offbynull.portmapper:portmapper:2.0.6`) is Apache-2.0 and on Maven Central but is functionally abandoned (last commit Jan 2023) and the deal-breaker is its API shape: the `PortMapper` interface only exposes 4 mapping primitives (`mapPort` / `unmapPort` / `refreshPort` / `getSourceAddress`) with **no `listExistingMappings()`** and **no router-level `getExternalIpAddress()`** — both required by our `IRouter` SPI for the GUI's mappings table and External Address display. Adopting would require either degrading the GUI or reimplementing the queries beneath offbynull, defeating the point. Revisit only if a future *mapping-only headless* mode is wanted (no GUI), where the narrow API would be a fit.
 

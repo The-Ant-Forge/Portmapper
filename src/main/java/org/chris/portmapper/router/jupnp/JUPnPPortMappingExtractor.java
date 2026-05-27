@@ -110,32 +110,21 @@ class JUPnPPortMappingExtractor {
     }
 
     /**
-     * This method checks, if the error code of the given exception means, that no more mappings are available.
-     * <p>
-     * The following error codes are recognized:
+     * Check whether the response's error code is a terminal one — i.e. the router is telling us
+     * we've run off the end of its port-mapping array and we should stop iterating.
+     *
+     * <p>Recognised terminal codes (gathered empirically across multiple router firmwares):
      * <ul>
-     * <li>SpecifiedArrayIndexInvalid: 713</li>
-     * <li>NoSuchEntryInArray: 714</li>
-     * <li>Invalid Args: 402 (e.g. for DD-WRT, TP-LINK TL-R460 firmware 4.7.6 Build 100714 Rel.63134n)</li>
-     * <li>Other errors, e.g. "The reference to entity "T" must end with the ';' delimiter" or
-     * "Content is not allowed in prolog": 899 (e.g. ActionTec MI424-WR, Thomson TWG850-4U)</li>
-     * </ul>
-     * See bug reports
-     * <ul>
-     * <li><a href= "https://sourceforge.net/tracker/index.php?func=detail&aid=1939749&group_id=213879&atid=1027466" >
-     * https://sourceforge.net/tracker/index.php?func=detail&aid= 1939749&group_id=213879&atid=1027466</a></li>
-     * <li><a href="http://www.sbbi.net/forum/viewtopic.php?p=394">http://www.sbbi .net/forum/viewtopic.php?p=394</a>
-     * </li>
-     * <li><a href= "http://sourceforge.net/tracker/?func=detail&atid=1027466&aid=3325388&group_id=213879" >http://
-     * sourceforge.net/tracker/?func=detail&atid=1027466&aid=3325388& group_id=213879</a></li>
-     * <a href= "https://sourceforge.net/tracker2/?func=detail&aid=2540478&group_id=213879&atid=1027466" >https://
-     * sourceforge.net/tracker2/?func=detail&aid=2540478&group_id= 213879&atid=1027466</a></li>
+     * <li>{@code 713} — SpecifiedArrayIndexInvalid (the UPnP-IGD standard).</li>
+     * <li>{@code 714} — NoSuchEntryInArray (some firmwares return this instead of 713).</li>
+     * <li>{@code 402} — Invalid Args (DD-WRT, older TP-Link TL-R460 firmwares).</li>
+     * <li>{@code 899} — generic SOAP fault catch-all returned by some old routers (ActionTec
+     *     MI424-WR, Thomson TWG850-4U) when the array is exhausted.</li>
      * </ul>
      *
-     * @param incomingActionResponseMessage
-     *            the exception to check
-     * @return <code>true</code>, if the given exception means, that no more port mappings are available, else
-     *         <code>false</code>.
+     * @param incomingActionResponseMessage the response to check.
+     * @return {@code true} if the response indicates "no more mappings"; {@code false} for any
+     *         other status (including success).
      */
     private boolean isNoMoreMappingsException(final IncomingActionResponseMessage incomingActionResponseMessage) {
         final int errorCode = incomingActionResponseMessage.getOperation().getStatusCode();

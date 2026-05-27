@@ -81,14 +81,11 @@ java -jar portmapper-<version>-all.jar -h
 
 ### UPnP libraries
 
-PortMapper ships three third-party UPnP libraries. If the default doesn't work for your device, try a different one:
+PortMapper ships two third-party UPnP libraries. If the default doesn't work for your device, try the other:
 
 - [jUPnP](https://github.com/jupnp/jupnp): `org.chris.portmapper.router.jupnp.JUPnPRouterFactory` (default; active fork of the abandoned Cling library)
 - [weupnp](https://github.com/bitletorg/weupnp): `org.chris.portmapper.router.weupnp.WeUPnPRouterFactory`
-- [SBBI UPnP lib](https://sourceforge.net/projects/upnplibmobile/): `org.chris.portmapper.router.sbbi.SBBIRouterFactory`
 - `org.chris.portmapper.router.dummy.DummyRouterFactory` (for testing only)
-
-> **Note:** BSAF replacement is still on the modernization roadmap for this fork.
 
 ### Language
 
@@ -139,7 +136,7 @@ This is useful when a network bridge or unusual topology prevents auto-discovery
 
 ### Multiple routers
 
-If your network has more than one UPnP gateway, use the `weupnp` or `sbbi` backends — both prompt you to select one. The `cling` backend only supports a single router.
+If your network has more than one UPnP gateway, use the `weupnp` backend — it prompts you to select one. The `jupnp` backend only supports a single router.
 
 ### Expiring port mappings
 

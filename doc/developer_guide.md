@@ -20,8 +20,8 @@ A single command builds and launches:
 ## Single-test execution
 
 ```sh
-./gradlew test --tests org.chris.portmapper.router.sbbi.TestPortMappingExtractor
-./gradlew test --tests '*TestPortMappingExtractor.<methodName>'
+./gradlew test --tests org.chris.portmapper.router.dummy.TestDummyRouter
+./gradlew test --tests '*TestDummyRouter.<methodName>'
 ```
 
 ## Apply license headers to new files
